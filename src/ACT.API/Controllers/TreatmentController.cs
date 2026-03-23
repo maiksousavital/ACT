@@ -1,4 +1,3 @@
-
 using ACT.Application.Dtos;
 using ACT.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,6 +38,16 @@ public class TreatmentsController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
+    }
+
+    // GET /api/treatment/{id}
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null)
+            return NotFound();
+        return Ok(result);
     }
 }
 

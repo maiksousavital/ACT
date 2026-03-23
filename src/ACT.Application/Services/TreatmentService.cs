@@ -1,4 +1,3 @@
-
 using ACT.Application.Dtos;
 using ACT.Domain.Entities;
 using ACT.Domain.Interfaces;
@@ -39,6 +38,14 @@ public class TreatmentService
     {
         var treatments = await _treatments.GetByClientAsync(clientId);
         return treatments.Select(ToDto);
+    }
+
+    public async Task<TreatmentDto?> GetByIdAsync(Guid id)
+    {
+        var treatment = await _treatments.GetByIdAsync(id);
+        if (treatment == null)
+            return null;
+        return ToDto(treatment);
     }
 
     // ── Mutations ─────────────────────────────────────────────────────────────
