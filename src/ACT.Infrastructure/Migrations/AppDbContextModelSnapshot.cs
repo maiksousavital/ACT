@@ -17,11 +17,45 @@ namespace ACT.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.14");
 
+            modelBuilder.Entity("ACT.Domain.Entities.BrandSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AccentColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Theme")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("BrandSettings");
+                });
+
             modelBuilder.Entity("ACT.Domain.Entities.Client", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -53,17 +87,57 @@ namespace ACT.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CompanyId");
+
                     b.ToTable("Clients");
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Companies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Default Company"
+                        });
                 });
 
             modelBuilder.Entity("ACT.Domain.Entities.Treatment", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("ClientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FollowUpNotes")
                         .HasMaxLength(1000)
@@ -82,12 +156,14 @@ namespace ACT.Infrastructure.Migrations
                     b.Property<DateTime>("TreatmentDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("TreatmentTypeId")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("TreatmentTypeId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("NextFollowUpDate");
 
@@ -98,11 +174,14 @@ namespace ACT.Infrastructure.Migrations
 
             modelBuilder.Entity("ACT.Domain.Entities.TreatmentType", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("FollowUpIntervalMonths")
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FollowUpIntervalDays")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
@@ -115,6 +194,8 @@ namespace ACT.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CompanyId");
+
                     b.HasIndex("Name")
                         .IsUnique();
 
@@ -123,32 +204,58 @@ namespace ACT.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000001"),
-                            FollowUpIntervalMonths = 3,
+                            Id = 1,
+                            CompanyId = 1,
+                            FollowUpIntervalDays = 90,
                             IsActive = true,
                             Name = "Botox"
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000002"),
-                            FollowUpIntervalMonths = 6,
+                            Id = 2,
+                            CompanyId = 1,
+                            FollowUpIntervalDays = 180,
                             IsActive = true,
                             Name = "Filler"
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000003"),
-                            FollowUpIntervalMonths = 4,
+                            Id = 3,
+                            CompanyId = 1,
+                            FollowUpIntervalDays = 120,
                             IsActive = true,
                             Name = "Skin Booster"
                         },
                         new
                         {
-                            Id = new Guid("11111111-0000-0000-0000-000000000004"),
-                            FollowUpIntervalMonths = 1,
+                            Id = 4,
+                            CompanyId = 1,
+                            FollowUpIntervalDays = 30,
                             IsActive = true,
                             Name = "Peel"
                         });
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.BrandSettings", b =>
+                {
+                    b.HasOne("ACT.Domain.Entities.Company", "Company")
+                        .WithMany("BrandSettings")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.Client", b =>
+                {
+                    b.HasOne("ACT.Domain.Entities.Company", "Company")
+                        .WithMany("Clients")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("ACT.Domain.Entities.Treatment", b =>
@@ -156,6 +263,11 @@ namespace ACT.Infrastructure.Migrations
                     b.HasOne("ACT.Domain.Entities.Client", "Client")
                         .WithMany("Treatments")
                         .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ACT.Domain.Entities.Company", "Company")
+                        .WithMany("Treatments")
+                        .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -167,11 +279,35 @@ namespace ACT.Infrastructure.Migrations
 
                     b.Navigation("Client");
 
+                    b.Navigation("Company");
+
                     b.Navigation("TreatmentType");
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.TreatmentType", b =>
+                {
+                    b.HasOne("ACT.Domain.Entities.Company", "Company")
+                        .WithMany("TreatmentTypes")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("ACT.Domain.Entities.Client", b =>
                 {
+                    b.Navigation("Treatments");
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.Company", b =>
+                {
+                    b.Navigation("BrandSettings");
+
+                    b.Navigation("Clients");
+
+                    b.Navigation("TreatmentTypes");
+
                     b.Navigation("Treatments");
                 });
 

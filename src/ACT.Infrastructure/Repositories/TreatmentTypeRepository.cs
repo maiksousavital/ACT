@@ -14,14 +14,14 @@ public class TreatmentTypeRepository : ITreatmentTypeRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync()
+    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int companyId)
     {
         return await _context.TreatmentTypes
-            .Where(tt => tt.IsActive)
+            .Where(tt => tt.CompanyId == companyId && tt.IsActive)
             .ToListAsync();
     }
 
-    public async Task<TreatmentType?> GetByIdAsync(Guid id)
+    public async Task<TreatmentType?> GetByIdAsync(int id)
     {
         return await _context.TreatmentTypes
             .FirstOrDefaultAsync(tt => tt.Id == id);
@@ -36,5 +36,20 @@ public class TreatmentTypeRepository : ITreatmentTypeRepository
     {
         await _context.SaveChangesAsync();
     }
-}
 
+    public async Task<(IEnumerable<TreatmentType> Items, int TotalCount)> GetPagedAsync(int companyId, int page, int pageSize)
+    {
+        var query = _context.TreatmentTypes
+            .Where(tt => tt.CompanyId == companyId)
+            .OrderBy(tt => tt.Name);
+        var totalCount = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (items, totalCount);
+    }
+
+    public async Task UpdateAsync(TreatmentType treatmentType)
+    {
+        _context.TreatmentTypes.Update(treatmentType);
+        await Task.CompletedTask;
+    }
+}

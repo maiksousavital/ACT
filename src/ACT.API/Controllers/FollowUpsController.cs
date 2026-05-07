@@ -1,5 +1,5 @@
 using ACT.Application.Dtos;
-using ACT.Application.Services;
+using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ACT.API.Controllers;
@@ -8,19 +8,22 @@ namespace ACT.API.Controllers;
 [Route("api/followups")]
 public class FollowUpsController : ControllerBase
 {
-    private readonly TreatmentService _service;
+    private readonly ITreatmentService _service;
 
-    public FollowUpsController(TreatmentService service)
+    public FollowUpsController(ITreatmentService service)
     {
         _service = service;
     }
+
+    // TODO: Phase 1.4 — resolve companyId from middleware instead of hardcoding
+    private int CompanyId => int.TryParse(HttpContext.Items["CompanyId"]?.ToString(), out var id) ? id : 1;
 
     // GET /api/followups/due
     // All outstanding follow-ups — used by the Treatments page
     [HttpGet("due")]
     public async Task<IActionResult> GetDue()
     {
-        var result = await _service.GetDueAsync();
+        var result = await _service.GetDueAsync(CompanyId);
         return Ok(result);
     }
 
@@ -29,15 +32,15 @@ public class FollowUpsController : ControllerBase
     [HttpGet("today")]
     public async Task<IActionResult> GetToday()
     {
-        var result = await _service.GetTodayAsync();
+        var result = await _service.GetTodayAsync(CompanyId);
         return Ok(result);
     }
 
     // POST /api/followups/{id}/complete
     // Marks a follow-up done and schedules the next one automatically
-    [HttpPost("{id:guid}/complete")]
+    [HttpPost("{id:int}/complete")]
     public async Task<IActionResult> Complete(
-        Guid id,
+        int id,
         [FromBody] CompleteFollowUpRequest request)
     {
         try

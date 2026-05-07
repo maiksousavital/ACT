@@ -1,4 +1,5 @@
 // ACT.API/Program.cs
+using ACT.Application.Services.Interfaces;
 using ACT.Domain.Interfaces;
 using ACT.Infrastructure.Persistence;
 using ACT.Infrastructure.Repositories;
@@ -6,7 +7,6 @@ using ACT.Infrastructure.Services;
 using ACT.Application.Services;
 using Microsoft.EntityFrameworkCore;
 
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +18,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<ITreatmentRepository, TreatmentRepository>();
 builder.Services.AddScoped<ITreatmentTypeRepository, TreatmentTypeRepository>();
+builder.Services.AddScoped<IBrandSettingsRepository, BrandSettingsRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
 // ── Background service ────────────────────────────────────────────────────────
 // Singleton lifetime is required for IHostedService
@@ -26,10 +28,17 @@ builder.Services.AddHostedService<FollowUpNotificationWorker>();
 
 // ── API + docs ────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
-builder.Services.AddOpenApi(); // Scalar uses the built-in OpenAPI doc
-builder.Services.AddHostedService<FollowUpNotificationWorker>();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "ACT — Aesthetic Client Tracker", Version = "v1" });
+});
 
-builder.Services.AddScoped<TreatmentService>();
+// ── Services ──────────────────────────────────────────────────────────────────
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<ITreatmentService, TreatmentService>();
+builder.Services.AddScoped<ITreatmentTypeService, TreatmentTypeService>();
+builder.Services.AddScoped<IBrandSettingsService, BrandSettingsService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
 // ── CORS — allow React PWA running on a different port during development ─────
 builder.Services.AddCors(options =>
 {
@@ -59,16 +68,22 @@ using (var scope = app.Services.CreateScope())
 // ── Middleware pipeline ───────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        options.Title = "ACT — Aesthetic Client Tracker";
-        options.Theme = ScalarTheme.Purple; // fits the clinic branding
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ACT — Aesthetic Client Tracker v1");
     });
 }
 
 app.UseCors("AllowPwa");
-app.UseHttpsRedirection();
+
+// Only use HTTPS redirection if HTTPS is enabled in the URLs
+var hasHttps = app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+if (hasHttps)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthorization();
 app.MapControllers();
 

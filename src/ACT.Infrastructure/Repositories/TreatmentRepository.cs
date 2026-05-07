@@ -14,32 +14,34 @@ public class TreatmentRepository : ITreatmentRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Treatment>> GetDueAsync()
+    public async Task<IEnumerable<Treatment>> GetDueAsync(int companyId)
     {
         return await _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
             .Where(t =>
+                t.CompanyId == companyId &&
                 t.FollowedUpAt == null &&
                 t.NextFollowUpDate.Date <= DateTime.UtcNow.Date)
             .OrderBy(t => t.NextFollowUpDate)
             .ToListAsync();
     }
     
-    public async Task<IEnumerable<Treatment>> GetTodayAsync()
+    public async Task<IEnumerable<Treatment>> GetTodayAsync(int companyId)
     {
         var today = DateTime.UtcNow.Date;
         return await _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
             .Where(t =>
+                t.CompanyId == companyId &&
                 t.FollowedUpAt == null &&
                 t.NextFollowUpDate.Date == today)
             .OrderBy(t => t.Client.LastName)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Treatment>> GetByClientAsync(Guid clientId)
+    public async Task<IEnumerable<Treatment>> GetByClientAsync(int clientId)
     {
         return await _context.Treatments
             .Include(t => t.Client)
@@ -48,7 +50,7 @@ public class TreatmentRepository : ITreatmentRepository
             .ToListAsync();
     }
     
-    public async Task<Treatment?> GetByIdAsync(Guid id)
+    public async Task<Treatment?> GetByIdAsync(int id)
     {
         return await _context.Treatments
             .Include(t => t.Client)
@@ -65,5 +67,22 @@ public class TreatmentRepository : ITreatmentRepository
     {
         await _context.SaveChangesAsync();
     }
-}
 
+    public async Task<(IEnumerable<Treatment> Items, int TotalCount)> GetPagedAsync(int companyId, int page, int pageSize)
+    {
+        var query = _context.Treatments
+            .Include(t => t.Client)
+            .Include(t => t.TreatmentType)
+            .Where(t => t.CompanyId == companyId)
+            .OrderByDescending(t => t.TreatmentDate);
+        var totalCount = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (items, totalCount);
+    }
+
+    public async Task UpdateAsync(Treatment treatment)
+    {
+        _context.Treatments.Update(treatment);
+        await Task.CompletedTask;
+    }
+}

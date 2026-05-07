@@ -1,5 +1,5 @@
 using ACT.Application.Dtos;
-using ACT.Application.Services;
+using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ACT.API.Controllers;
@@ -8,20 +8,15 @@ namespace ACT.API.Controllers;
 [Route("api/treatment")]
 public class TreatmentsController : ControllerBase
 {
-    private readonly TreatmentService _service;
+    private readonly ITreatmentService _service;
 
-    public TreatmentsController(TreatmentService service)
+    public TreatmentsController(ITreatmentService service)
     {
         _service = service;
     }
 
-    // GET /api/treatments/client/{clientId}
-    [HttpGet("client/{clientId:guid}")]
-    public async Task<IActionResult> GetByClient(Guid clientId)
-    {
-        var result = await _service.GetByClientAsync(clientId);
-        return Ok(result);
-    }
+    // TODO: Phase 1.4 — resolve companyId from middleware instead of hardcoding
+    private int CompanyId => int.TryParse(HttpContext.Items["CompanyId"]?.ToString(), out var id) ? id : 1;
 
     // POST /api/treatments
     [HttpPost]
@@ -30,8 +25,8 @@ public class TreatmentsController : ControllerBase
     {
         try
         {
-            var result = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetByClient),
+            var result = await _service.CreateAsync(CompanyId, request);
+            return CreatedAtAction(nameof(GetPaged),
                 new { clientId = result.ClientId }, result);
         }
         catch (KeyNotFoundException ex)
@@ -40,104 +35,38 @@ public class TreatmentsController : ControllerBase
         }
     }
 
-    // GET /api/treatment/{id}
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    // GET /api/treatments/paged?page=1&pageSize=20
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _service.GetByIdAsync(id);
-        if (result == null)
-            return NotFound();
+        var result = await _service.GetPagedAsync(CompanyId, page, pageSize);
         return Ok(result);
     }
-}
 
-/*
-using ACT.Domain.Entities;
-using ACT.Domain.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-using ACT.Application.Dtos;
-
-namespace ACT.API.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class TreatmentController : ControllerBase
-{
-    private readonly ITreatmentRepository _treatmentRepository;
-    private readonly ITreatmentTypeRepository _treatmentTypeRepository;
-
-    public TreatmentController(ITreatmentRepository treatmentRepository, ITreatmentTypeRepository treatmentTypeRepository)
+    // PUT /api/treatment/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateTreatmentRequest request)
     {
-        _treatmentRepository = treatmentRepository;
-        _treatmentTypeRepository = treatmentTypeRepository;
-    }
-
-    [HttpGet("due")]
-    public async Task<ActionResult<IEnumerable<TreatmentDto>>> GetDue()
-    {
-        var treatments = await _treatmentRepository.GetDueAsync();
-        var dtos = treatments.Select(TreatmentDto.FromEntity);
-        return Ok(dtos);
-    }
-
-    [HttpGet("by-client/{clientId}")]
-    public async Task<ActionResult<IEnumerable<TreatmentDto>>> GetByClient(Guid clientId)
-    {
-        var treatments = await _treatmentRepository.GetByClientAsync(clientId);
-        var dtos = treatments.Select(TreatmentDto.FromEntity);
-        return Ok(dtos);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<TreatmentDto>> Create([FromBody] CreateTreatmentRequest request)
-    {
-        var treatmentType = await _treatmentTypeRepository.GetByIdAsync(request.TreatmentTypeId);
-        if (treatmentType == null)
+        try
         {
-            return BadRequest("Invalid treatment type.");
+            var updated = await _service.UpdateAsync(id, request);
+            if (updated == null)
+                return NotFound();
+            return Ok(updated);
         }
-        var treatment = Treatment.Create(request.ClientId, treatmentType, request.TreatmentDate, request.Notes);
-        await _treatmentRepository.AddAsync(treatment);
-        await _treatmentRepository.SaveChangesAsync();
-        return Ok(TreatmentDto.FromEntity(treatment));
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // GET /api/treatment/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TreatmentDto>> GetById(int id)
+    {
+        var treatment = await _service.GetByIdAsync(id);
+        if (treatment == null) return NotFound();
+        return Ok(treatment);
     }
 }
 
-/*
-public class CreateTreatmentRequest
-{
-    public Guid ClientId { get; set; }
-    public Guid TreatmentTypeId { get; set; }
-    public DateTime TreatmentDate { get; set; }
-    public string? Notes { get; set; }
-}
-#1#
-
-/*public class TreatmentDto
-{
-    public Guid Id { get; set; }
-    public Guid ClientId { get; set; }
-    public Guid TreatmentTypeId { get; set; }
-    public DateTime TreatmentDate { get; set; }
-    public DateTime NextFollowUpDate { get; set; }
-    public string? Notes { get; set; }
-    public DateTime? FollowedUpAt { get; set; }
-    public string? FollowUpNotes { get; set; }
-    public bool IsFollowedUp { get; set; }
-    public bool IsDue { get; set; }
-
-    public static TreatmentDto FromEntity(Treatment t) => new TreatmentDto
-    {
-        Id = t.Id,
-        ClientId = t.ClientId,
-        TreatmentTypeId = t.TreatmentTypeId,
-        TreatmentDate = t.TreatmentDate,
-        NextFollowUpDate = t.NextFollowUpDate,
-        Notes = t.Notes,
-        FollowedUpAt = t.FollowedUpAt,
-        FollowUpNotes = t.FollowUpNotes,
-        IsFollowedUp = t.IsFollowedUp,
-        IsDue = t.IsDue
-    };
-}#1#
-*/

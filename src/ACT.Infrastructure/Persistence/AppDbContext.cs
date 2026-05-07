@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<TreatmentType> TreatmentTypes => Set<TreatmentType>();
     public DbSet<Treatment> Treatments => Set<Treatment>();
+    public DbSet<BrandSettings> BrandSettings => Set<BrandSettings>();
+    public DbSet<Company> Companies => Set<Company>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +33,12 @@ public class AppDbContext : DbContext
             e.HasMany(c => c.Treatments)
              .WithOne(t => t.Client)
              .HasForeignKey(t => t.ClientId)
+             .OnDelete(DeleteBehavior.Cascade)
+             .IsRequired(false); // Make optional
+
+            e.HasOne(c => c.Company)
+             .WithMany(co => co.Clients)
+             .HasForeignKey(c => c.CompanyId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -48,6 +56,11 @@ public class AppDbContext : DbContext
              .HasForeignKey(t => t.TreatmentTypeId)
              // Restrict prevents accidental deletion of a type that has treatments
              .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(t => t.Company)
+             .WithMany(co => co.TreatmentTypes)
+             .HasForeignKey(t => t.CompanyId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Treatment ─────────────────────────────────────────────────────────
@@ -60,38 +73,74 @@ public class AppDbContext : DbContext
             // Index for the most common query — due follow-ups
             e.HasIndex(t => t.NextFollowUpDate);
             e.HasIndex(t => t.ClientId);
+
+            e.HasOne(t => t.Company)
+             .WithMany(co => co.Treatments)
+             .HasForeignKey(t => t.CompanyId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Company ───────────────────────────────────────────────────────────
+        modelBuilder.Entity<Company>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Name).IsRequired().HasMaxLength(200);
+            e.Property(c => c.ContactEmail).HasMaxLength(150);
+            e.Property(c => c.Phone).HasMaxLength(50);
+            e.Property(c => c.Address).HasMaxLength(300);
+        });
+
+        // ── BrandSettings ─────────────────────────────────────────────────────
+        modelBuilder.Entity<BrandSettings>(e =>
+        {
+            e.HasKey(b => b.Id);
+            e.HasOne(b => b.Company)
+             .WithMany(c => c.BrandSettings)
+             .HasForeignKey(b => b.CompanyId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Seed data ─────────────────────────────────────────────────────────
-        // Fixed GUIDs are required — EF seed data must be stable across migrations
+        modelBuilder.Entity<Company>().HasData(
+            new Company
+            {
+                Id = 1,
+                Name = "Default Company"
+            }
+        );
+
         modelBuilder.Entity<TreatmentType>().HasData(
             new TreatmentType
             {
-                Id = Guid.Parse("11111111-0000-0000-0000-000000000001"),
+                Id = 1,
                 Name = "Botox",
-                FollowUpIntervalMonths = 3,
-                IsActive = true
+                FollowUpIntervalDays = 90,
+                IsActive = true,
+                CompanyId = 1
             },
             new TreatmentType
             {
-                Id = Guid.Parse("11111111-0000-0000-0000-000000000002"),
+                Id = 2,
                 Name = "Filler",
-                FollowUpIntervalMonths = 6,
-                IsActive = true
+                FollowUpIntervalDays = 180,
+                IsActive = true,
+                CompanyId = 1
             },
             new TreatmentType
             {
-                Id = Guid.Parse("11111111-0000-0000-0000-000000000003"),
+                Id = 3,
                 Name = "Skin Booster",
-                FollowUpIntervalMonths = 4,
-                IsActive = true
+                FollowUpIntervalDays = 120,
+                IsActive = true,
+                CompanyId = 1
             },
             new TreatmentType
             {
-                Id = Guid.Parse("11111111-0000-0000-0000-000000000004"),
+                Id = 4,
                 Name = "Peel",
-                FollowUpIntervalMonths = 1,
-                IsActive = true
+                FollowUpIntervalDays = 30,
+                IsActive = true,
+                CompanyId = 1
             }
         );
     }

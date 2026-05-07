@@ -3,10 +3,10 @@ using ACT.Domain.Entities;
 namespace ACT.Application.Dtos;
 public class TreatmentDto
 {
-    public Guid      Id                { get; init; }
-    public Guid      ClientId          { get; init; }
+    public int      Id                { get; init; }
+    public int      ClientId          { get; init; }
     public string    ClientName        { get; init; } = string.Empty;
-    public Guid      TreatmentTypeId   { get; init; }
+    public int      TreatmentTypeId   { get; init; }
     public string    TreatmentTypeName { get; init; } = string.Empty;
     public string?   Phone             { get; init; }
     public DateTime  TreatmentDate     { get; init; }
@@ -34,8 +34,8 @@ public class TreatmentDto
 
 public class CreateTreatmentRequest
 {
-    public Guid ClientId { get; set; }
-    public Guid TreatmentTypeId { get; set; }
+    public int ClientId { get; set; }
+    public int TreatmentTypeId { get; set; }
     public DateTime TreatmentDate { get; set; }
     public string? Notes { get; set; }
 }

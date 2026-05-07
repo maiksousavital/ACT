@@ -1,4 +1,5 @@
-using ACT.Domain.Interfaces;
+using ACT.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
@@ -26,11 +27,15 @@ public class FollowUpNotificationWorker : BackgroundService
             await Task.Delay(nextRun - now, ct);
 
             using var scope = _scopeFactory.CreateScope();
-            var repo = scope.ServiceProvider.GetRequiredService<ITreatmentRepository>();
-            var due = await repo.GetDueAsync();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            _logger.LogInformation("Follow-ups due today: {Count}", due.Count());
-            // Push notification logic goes here in v1.1
+            // Cross-company: get all due follow-ups regardless of company
+            var due = await db.Treatments
+                .Where(t => t.FollowedUpAt == null && t.NextFollowUpDate.Date <= DateTime.UtcNow.Date)
+                .CountAsync(ct);
+
+            _logger.LogInformation("Follow-ups due today: {Count}", due);
+            // TODO: Push notification logic — group by CompanyId for per-company notifications
         }
     }
 }
