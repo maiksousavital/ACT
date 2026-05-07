@@ -1,9 +1,11 @@
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ACT.API.Controllers;
 
+[Authorize(Roles = "SuperAdmin")]
 [ApiController]
 [Route("api/[controller]")]
 public class CompanyController : ControllerBase
@@ -45,4 +47,3 @@ public class CompanyController : ControllerBase
         return Ok(updated);
     }
 }
-

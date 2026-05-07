@@ -223,3 +223,28 @@ All changes made during the SaaS implementation plan, grouped by phase.
 **Seeded SuperAdmin credentials (for testing):**
 - Email: `admin@act.local`
 - Password: `Admin123!`
+
+---
+
+### 3.4 Wire CompanyId from JWT into controllers *(completed 2026-05-08)*
+
+**All controllers updated — replaced `HttpContext.Items["CompanyId"]` with JWT claims:**
+- `ClientController.cs` — `[Authorize]`, `CompanyId` from `User.FindFirstValue("companyId")`
+- `TreatmentController.cs` — same
+- `TreatmentTypeController.cs` — same
+- `FollowUpsController.cs` — same
+- `FollowUpPeriodsController.cs` — `[Authorize]` added
+- `Admin/BrandSettingsController.cs` — `[Authorize]` added
+
+**Role-based access:**
+- `CompanyController.cs` — `[Authorize(Roles = "SuperAdmin")]`
+- `AuthController.cs` — `POST /auth/login` is `[AllowAnonymous]`, `POST /auth/register` is `[Authorize(Roles = "SuperAdmin")]`
+
+**Swagger JWT support:**
+- Added Bearer token security definition + requirement to SwaggerGen config
+- Downgraded `Swashbuckle.AspNetCore` from v10.1.7 → v6.9.0 (v10 uses OpenApi v2 with incompatible namespace)
+
+**API — Program.cs modified:**
+- Added `using Microsoft.OpenApi.Models`
+- Added `AddSecurityDefinition` + `AddSecurityRequirement` for JWT Bearer in Swagger
+

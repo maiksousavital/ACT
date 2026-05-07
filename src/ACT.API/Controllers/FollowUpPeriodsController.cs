@@ -1,8 +1,10 @@
 using ACT.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ACT.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/followup-periods")]
 public class FollowUpPeriodsController : ControllerBase

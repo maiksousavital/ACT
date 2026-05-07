@@ -1,9 +1,12 @@
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ACT.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/treatment")]
 public class TreatmentsController : ControllerBase
@@ -15,8 +18,7 @@ public class TreatmentsController : ControllerBase
         _service = service;
     }
 
-    // TODO: Phase 1.4 — resolve companyId from middleware instead of hardcoding
-    private int CompanyId => int.TryParse(HttpContext.Items["CompanyId"]?.ToString(), out var id) ? id : 1;
+    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
 
     // POST /api/treatments
     [HttpPost]
@@ -69,4 +71,3 @@ public class TreatmentsController : ControllerBase
         return Ok(treatment);
     }
 }
-

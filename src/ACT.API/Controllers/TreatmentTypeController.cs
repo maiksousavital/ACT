@@ -1,10 +1,13 @@
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ACT.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class TreatmentTypeController : ControllerBase
@@ -16,8 +19,7 @@ public class TreatmentTypeController : ControllerBase
         _treatmentTypeService = treatmentTypeService;
     }
 
-    // TODO: Phase 1.4 — resolve companyId from middleware instead of hardcoding
-    private int CompanyId => int.TryParse(HttpContext.Items["CompanyId"]?.ToString(), out var id) ? id : 1;
+    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
 
     // GET /api/treatmenttype/paged?page=1&pageSize=20
     [HttpGet("paged")]

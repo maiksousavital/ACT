@@ -74,10 +74,10 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [ ] Test login with seeded SuperAdmin via Swagger
 
 ### 3.4 Wire CompanyId from JWT into controllers
-- [ ] Replace hardcoded `CompanyId = 1` fallback in controllers with `User.Claims` extraction
-- [ ] Add `[Authorize]` attribute to all controllers
-- [ ] Add role-based policies (`SuperAdmin`, `Admin`, `User`)
-- [ ] SuperAdmin endpoints (company CRUD, user creation) require `[Authorize(Roles = "SuperAdmin")]`
+- [x] Replace hardcoded `CompanyId = 1` fallback in controllers with `User.Claims` extraction
+- [x] Add `[Authorize]` attribute to all controllers
+- [x] Add role-based policies (`SuperAdmin`, `Admin`, `User`)
+- [x] SuperAdmin endpoints (company CRUD, user creation) require `[Authorize(Roles = "SuperAdmin")]`
 - [ ] Test login → CRUD flow end-to-end
 
 ### 3.5 Google / OAuth login (optional, after JWT works)

@@ -1,9 +1,12 @@
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ACT.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/followups")]
 public class FollowUpsController : ControllerBase
@@ -15,8 +18,7 @@ public class FollowUpsController : ControllerBase
         _service = service;
     }
 
-    // TODO: Phase 1.4 — resolve companyId from middleware instead of hardcoding
-    private int CompanyId => int.TryParse(HttpContext.Items["CompanyId"]?.ToString(), out var id) ? id : 1;
+    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
 
     // GET /api/followups/due
     // All outstanding follow-ups — used by the Treatments page
