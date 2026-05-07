@@ -57,18 +57,18 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [x] Seed a default SuperAdmin user (email: `admin@act.local`, hashed password)
 
 ### 3.2 JWT auth infrastructure
-- [ ] Add `JwtSettings` config section to `appsettings.json` (Secret, Issuer, Audience, ExpiryMinutes)
-- [ ] Add `IJwtService` + `JwtService` to generate tokens with claims (`UserId`, `Email`, `CompanyId`, `Role`)
-- [ ] Install `Microsoft.AspNetCore.Authentication.JwtBearer` NuGet package
-- [ ] Configure JWT authentication in `Program.cs`
-- [ ] Add password hashing service (BCrypt via `BCrypt.Net-Next` package)
+- [x] Add `JwtSettings` config section to `appsettings.json` (Secret, Issuer, Audience, ExpiryMinutes)
+- [x] Add `IJwtService` + `JwtService` to generate tokens with claims (`UserId`, `Email`, `CompanyId`, `Role`)
+- [x] Install `Microsoft.AspNetCore.Authentication.JwtBearer` NuGet package
+- [x] Configure JWT authentication in `Program.cs`
+- [x] Add password hashing service (BCrypt via `BCrypt.Net-Next` package)
 
 ### 3.3 Auth endpoints
-- [ ] Add `AuthController` with:
+- [x] Add `AuthController` with:
   - `POST /auth/login` — public, validates credentials, returns JWT
   - `POST /auth/register` — **SuperAdmin only**, creates a User for a given CompanyId
-- [ ] Add `LoginRequest` and `RegisterRequest` DTOs
-- [ ] Add `AuthResponseDto` (token, email, role, companyId)
+- [x] Add `LoginRequest` and `RegisterRequest` DTOs
+- [x] Add `AuthResponseDto` (token, email, role, companyId)
 - [ ] Test login with seeded SuperAdmin via Swagger
 
 ### 3.4 Wire CompanyId from JWT into controllers

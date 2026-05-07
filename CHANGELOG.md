@@ -116,5 +116,110 @@ All changes made during the SaaS implementation plan, grouped by phase.
 
 ## Note — Remaining issue in Program.cs
 
-- `AddHostedService<FollowUpNotificationWorker>()` is registered **twice** (lines 30 and 34). Should be registered once.
+- ~~`AddHostedService<FollowUpNotificationWorker>()` is registered **twice**~~ — **Fixed** (2026-05-07)
 
+---
+
+## Miscellaneous *(2026-05-07)*
+
+- Switched from Scalar to **Swagger UI** (Swashbuckle.AspNetCore). Removed `Scalar.AspNetCore` and `Microsoft.AspNetCore.OpenApi` packages. Swagger available at `/swagger`.
+- Fixed duplicate `FollowUpNotificationWorker` registration in `Program.cs`.
+
+---
+
+## Phase 2 — Company CRUD & Onboarding *(completed 2026-05-07)*
+
+**Domain — New files:**
+- `Interfaces/ICompanyRepository.cs` — `GetAllAsync`, `GetByIdAsync`, `AddAsync`, `UpdateAsync`, `SaveChangesAsync`, `GetPagedAsync`
+
+**Application — New files:**
+- `Dtos/CompanyDto.cs` — response DTO (Id, Name, ContactEmail, Phone, Address)
+- `Dtos/CreateCompanyRequest.cs` — create request DTO
+- `Dtos/UpdateCompanyRequest.cs` — update request DTO
+- `Services/Interfaces/ICompanyService.cs` — service interface
+- `Services/CompanyService.cs` — implementation with `ToDto` mapping
+
+**Infrastructure — New files:**
+- `Repositories/CompanyRepository.cs` — EF Core implementation, ordered by Name
+
+**API — New files:**
+- `Controllers/CompanyController.cs` — `GET paged`, `GET {id}`, `POST`, `PUT {id}`
+
+**API — Program.cs modified:**
+- Added `AddScoped<ICompanyRepository, CompanyRepository>()`
+- Added `AddScoped<ICompanyService, CompanyService>()`
+- Added `AddScoped<IClientService, ClientService>()` (was missing)
+- Cleaned up duplicate registrations and added section comments
+
+---
+
+## Phase 3 — Authentication & Authorization
+
+### 3.1 User entity & auth setup *(completed 2026-05-07)*
+
+**Domain — New files:**
+- `Enums/Role.cs` — `SuperAdmin = 0`, `Admin = 1`, `User = 2`
+- `Entities/User.cs` — `Id`, `Email`, `PasswordHash`, `CompanyId?`, `Role`, `IsActive`, `CreatedAt`
+- `Interfaces/IUserRepository.cs` — `GetByIdAsync`, `GetByEmailAsync`, `GetByCompanyAsync`, `AddAsync`, `UpdateAsync`, `SaveChangesAsync`
+
+**Infrastructure — New files:**
+- `Repositories/UserRepository.cs` — EF Core implementation
+
+**Infrastructure — AppDbContext modified:**
+- Added `DbSet<User>`
+- Added User entity configuration (unique email index, Role stored as int, FK to Company with `SetNull`)
+- Added seed data: SuperAdmin user (`admin@act.local` / `Admin123!`, Role=SuperAdmin, CompanyId=null)
+
+**API — Program.cs modified:**
+- Added `AddScoped<IUserRepository, UserRepository>()`
+
+**Migration:** `20260507195914_AddUserEntity`
+
+---
+
+### 3.2 JWT auth infrastructure *(completed 2026-05-08)*
+
+**API — appsettings.json modified:**
+- Added `JwtSettings` section: `Secret`, `Issuer`, `Audience`, `ExpiryMinutes` (480)
+
+**Application — New files:**
+- `Services/Interfaces/IJwtService.cs` — `GenerateToken(User user)`
+- `Services/Interfaces/IPasswordHasher.cs` — `Hash(string)`, `Verify(string, string)`
+
+**Infrastructure — New files:**
+- `Services/JwtService.cs` — generates JWT with claims (sub, email, role, companyId)
+- `Services/PasswordHasher.cs` — BCrypt wrapper
+
+**NuGet packages added:**
+- `Microsoft.AspNetCore.Authentication.JwtBearer` (API project)
+- `BCrypt.Net-Next` (Infrastructure + Application projects)
+- `System.IdentityModel.Tokens.Jwt` (Infrastructure project)
+- `Microsoft.IdentityModel.Tokens` (Infrastructure project)
+
+**API — Program.cs modified:**
+- Added JWT authentication configuration (`AddAuthentication`, `AddJwtBearer`, `AddAuthorization`)
+- Added `app.UseAuthentication()` before `app.UseAuthorization()`
+- Registered `IJwtService`, `IPasswordHasher`
+
+---
+
+### 3.3 Auth endpoints *(completed 2026-05-08)*
+
+**Application — New files:**
+- `Dtos/LoginRequest.cs` — email + password
+- `Dtos/RegisterRequest.cs` — email, password, companyId, role
+- `Dtos/AuthResponseDto.cs` — token, email, role, companyId
+- `Services/Interfaces/IAuthService.cs` — `LoginAsync`, `RegisterAsync`
+- `Services/AuthService.cs` — validates credentials, hashes passwords, calls JwtService
+
+**API — New files:**
+- `Controllers/AuthController.cs`:
+  - `POST /api/auth/login` — `[AllowAnonymous]`, returns JWT
+  - `POST /api/auth/register` — `[Authorize(Roles = "SuperAdmin")]`, creates user for a company
+
+**API — Program.cs modified:**
+- Added `AddScoped<IAuthService, AuthService>()`
+
+**Seeded SuperAdmin credentials (for testing):**
+- Email: `admin@act.local`
+- Password: `Admin123!`

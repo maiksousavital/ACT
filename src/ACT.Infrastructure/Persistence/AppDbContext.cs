@@ -1,5 +1,6 @@
 // ACT.Infrastructure/Persistence/AppDbContext.cs
 using ACT.Domain.Entities;
+using ACT.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace ACT.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Treatment> Treatments => Set<Treatment>();
     public DbSet<BrandSettings> BrandSettings => Set<BrandSettings>();
     public DbSet<Company> Companies => Set<Company>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -100,6 +102,21 @@ public class AppDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // ── User ──────────────────────────────────────────────────────────────
+        modelBuilder.Entity<User>(e =>
+        {
+            e.HasKey(u => u.Id);
+            e.Property(u => u.Email).IsRequired().HasMaxLength(200);
+            e.HasIndex(u => u.Email).IsUnique();
+            e.Property(u => u.PasswordHash).IsRequired();
+            e.Property(u => u.Role).HasConversion<int>();
+
+            e.HasOne(u => u.Company)
+             .WithMany()
+             .HasForeignKey(u => u.CompanyId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
         // ── Seed data ─────────────────────────────────────────────────────────
         modelBuilder.Entity<Company>().HasData(
             new Company
@@ -141,6 +158,20 @@ public class AppDbContext : DbContext
                 FollowUpIntervalDays = 30,
                 IsActive = true,
                 CompanyId = 1
+            }
+        );
+
+        // Seed SuperAdmin user — password: "Admin123!" (BCrypt hash)
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = 1,
+                Email = "admin@act.local",
+                PasswordHash = "$2a$11$UxNn19pLPpkpcqV/4rWT4OwNL8zxy9JA0oYtVzYhKgaveFZAVrkp.",
+                CompanyId = null,
+                Role = Role.SuperAdmin,
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
     }
