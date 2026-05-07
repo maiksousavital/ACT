@@ -42,30 +42,55 @@ Check off each item as it is completed. Execute phases in order — each phase k
 
 ---
 
-## Phase 3 — Authentication & Authorization
+## Phase 3 — Authentication & Authorization (Option A: Owner-Provisioned)
+
+> **Approach**: SuperAdmin (you) creates companies and their first Admin user. No public signup.
+> **Option B (self-service signup)** will be added later in Phase 7 alongside billing — it's additive, not a refactor.
 
 ### 3.1 User entity & auth setup
-- [ ] Add `User` entity (`Id`, `Email`, `PasswordHash`, `CompanyId`, `Role`)
-- [ ] Add `IUserRepository` + `UserRepository`
-- [ ] Integrate ASP.NET Core Identity or custom JWT-based auth
-- [ ] Add EF migration, update database
+- [x] Add `Role` enum (`SuperAdmin`, `Admin`, `User`) to `ACT.Domain/Enums/`
+- [x] Add `User` entity (`Id`, `Email`, `PasswordHash`, `CompanyId?`, `Role`, `IsActive`, `CreatedAt`)
+- [x] `CompanyId` is **nullable** — `null` for SuperAdmin, required for Admin/User
+- [x] Add `IUserRepository` + `UserRepository`
+- [x] Add `DbSet<User>` to `AppDbContext`, configure FK to Company
+- [x] Add EF migration, update database
+- [x] Seed a default SuperAdmin user (email: `admin@act.local`, hashed password)
 
-### 3.2 Auth endpoints
-- [ ] Add `POST /auth/register` (creates user + optionally a company)
-- [ ] Add `POST /auth/login` (returns JWT with `CompanyId` and `Role` claims)
-- [ ] Test registration and login via Scalar
+### 3.2 JWT auth infrastructure
+- [ ] Add `JwtSettings` config section to `appsettings.json` (Secret, Issuer, Audience, ExpiryMinutes)
+- [ ] Add `IJwtService` + `JwtService` to generate tokens with claims (`UserId`, `Email`, `CompanyId`, `Role`)
+- [ ] Install `Microsoft.AspNetCore.Authentication.JwtBearer` NuGet package
+- [ ] Configure JWT authentication in `Program.cs`
+- [ ] Add password hashing service (BCrypt via `BCrypt.Net-Next` package)
 
-### 3.3 Wire CompanyId from JWT into controllers
+### 3.3 Auth endpoints
+- [ ] Add `AuthController` with:
+  - `POST /auth/login` — public, validates credentials, returns JWT
+  - `POST /auth/register` — **SuperAdmin only**, creates a User for a given CompanyId
+- [ ] Add `LoginRequest` and `RegisterRequest` DTOs
+- [ ] Add `AuthResponseDto` (token, email, role, companyId)
+- [ ] Test login with seeded SuperAdmin via Swagger
+
+### 3.4 Wire CompanyId from JWT into controllers
 - [ ] Replace hardcoded `CompanyId = 1` fallback in controllers with `User.Claims` extraction
-- [ ] `CompanyId` now resolved from authenticated user's token
 - [ ] Add `[Authorize]` attribute to all controllers
-- [ ] Add role-based policies (Admin, User)
+- [ ] Add role-based policies (`SuperAdmin`, `Admin`, `User`)
+- [ ] SuperAdmin endpoints (company CRUD, user creation) require `[Authorize(Roles = "SuperAdmin")]`
 - [ ] Test login → CRUD flow end-to-end
 
-### 3.4 Google / OAuth login (optional, after JWT works)
+### 3.5 Google / OAuth login (optional, after JWT works)
 - [ ] Add ASP.NET Core External Login with Google provider
 - [ ] Map external login to internal User + CompanyId
 - [ ] Test OAuth flow
+
+### Future: Option B — Self-Service Signup (Phase 7)
+> When billing is ready, add a **public** `POST /auth/signup` endpoint that:
+> 1. Creates a new Company
+> 2. Creates an Admin user for that Company
+> 3. Assigns a default Plan (Free)
+> 4. Returns a JWT
+>
+> This is **additive** — no changes to existing auth code.
 
 ---
 
@@ -140,7 +165,10 @@ Check off each item as it is completed. Execute phases in order — each phase k
 | **Dapper** | Not needed now — EF Core is sufficient. Consider for complex reporting later. |
 | **Treatment CompanyId** | Recommended explicit (not just via Client FK) for simpler queries |
 | **Temp CompanyId** | Skipped middleware — controllers default to `1` until Phase 3 adds JWT claims |
-| **Google OAuth** | Add after basic JWT works (Phase 3.4) |
+| **Google OAuth** | Add after basic JWT works (Phase 3.5) |
+| **Auth approach** | Option A (owner-provisioned) — SuperAdmin creates companies + first users |
+| **Self-service signup** | Option B — deferred to Phase 7, additive (new endpoint, no refactor) |
+| **Roles** | `SuperAdmin` (no company), `Admin` (company owner), `User` (company staff) |
 
 ---
 

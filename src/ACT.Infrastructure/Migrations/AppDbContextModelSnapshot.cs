@@ -236,6 +236,54 @@ namespace ACT.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ACT.Domain.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "admin@act.local",
+                            IsActive = true,
+                            PasswordHash = "$2a$11$UxNn19pLPpkpcqV/4rWT4OwNL8zxy9JA0oYtVzYhKgaveFZAVrkp.",
+                            Role = 0
+                        });
+                });
+
             modelBuilder.Entity("ACT.Domain.Entities.BrandSettings", b =>
                 {
                     b.HasOne("ACT.Domain.Entities.Company", "Company")
@@ -291,6 +339,16 @@ namespace ACT.Infrastructure.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("ACT.Domain.Entities.User", b =>
+                {
+                    b.HasOne("ACT.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Company");
                 });

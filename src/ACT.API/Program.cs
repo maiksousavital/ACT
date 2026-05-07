@@ -20,6 +20,7 @@ builder.Services.AddScoped<ITreatmentRepository, TreatmentRepository>();
 builder.Services.AddScoped<ITreatmentTypeRepository, TreatmentTypeRepository>();
 builder.Services.AddScoped<IBrandSettingsRepository, BrandSettingsRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // ── Background service ────────────────────────────────────────────────────────
 // Singleton lifetime is required for IHostedService
