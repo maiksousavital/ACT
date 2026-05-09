@@ -1,10 +1,10 @@
-using ACT.Domain.Entities;
+using ACT.Application.Dtos;
 
 namespace ACT.Application.Services.Interfaces;
 
 public interface IBrandSettingsService
 {
-    Task<BrandSettings?> GetByCompanyIdAsync(int companyId);
-    Task<BrandSettings> CreateAsync(BrandSettings settings);
-    Task<BrandSettings?> UpdateAsync(int companyId, BrandSettings updated);
+    Task<BrandSettingsDto?> GetByCompanyIdAsync(int companyId);
+    Task<BrandSettingsDto> CreateAsync(int companyId, CreateBrandSettingsRequest request);
+    Task<BrandSettingsDto?> UpdateAsync(int companyId, UpdateBrandSettingsRequest request);
 }

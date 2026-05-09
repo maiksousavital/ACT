@@ -248,3 +248,143 @@ All changes made during the SaaS implementation plan, grouped by phase.
 - Added `using Microsoft.OpenApi.Models`
 - Added `AddSecurityDefinition` + `AddSecurityRequirement` for JWT Bearer in Swagger
 
+---
+
+### 3.4a JWT claim mapping fix *(completed 2026-05-08)*
+
+**Problem:** `[Authorize(Roles = "SuperAdmin")]` returned 401/403 because ASP.NET Core remapped JWT claim names.
+
+**Fix — Program.cs:**
+- Added `JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()`
+- Added `options.MapInboundClaims = false` on JwtBearer options
+- Added `RoleClaimType = "role"` and `NameClaimType = "email"` to `TokenValidationParameters`
+
+---
+
+### 3.4b SuperAdmin sees all companies' data *(completed 2026-05-08)*
+
+**Problem:** SuperAdmin has `CompanyId = null` (no company), so `int.Parse(null)` threw "Value cannot be null".
+
+**Design change:** `companyId` is now `int?` throughout the stack:
+- `null` = no filter, return all companies' data (SuperAdmin)
+- `X` = filter by that company (Admin/User)
+
+**Domain — Interfaces modified:**
+- `IClientRepository.cs` — `GetAllAsync(int? companyId, ...)`, `GetPagedAsync(int? companyId, ...)`
+- `ITreatmentRepository.cs` — `GetDueAsync(int?)`, `GetTodayAsync(int?)`, `GetPagedAsync(int?, ...)`
+- `ITreatmentTypeRepository.cs` — `GetAllActiveAsync(int?)`, `GetPagedAsync(int?, ...)`
+
+**Infrastructure — Repositories modified:**
+- `ClientRepository.cs` — conditionally filters by companyId only when non-null
+- `TreatmentRepository.cs` — same pattern
+- `TreatmentTypeRepository.cs` — same pattern
+
+**Application — Service interfaces + implementations modified:**
+- `IClientService.cs` / `ClientService.cs` — `int?` for list/paged methods
+- `ITreatmentService.cs` / `TreatmentService.cs` — `int?` for due/today/paged methods
+- `ITreatmentTypeService.cs` / `TreatmentTypeService.cs` — `int?` for active/paged methods
+
+**API — Controllers modified:**
+- All controllers: `CompanyId` property returns `int?` — `null` when claim is missing (SuperAdmin), parsed int when present (Admin/User)
+- Create endpoints: return `400 Bad Request` if `CompanyId` is null (SuperAdmin must specify a target company)
+
+---
+
+## Phase 4 — Branding & Settings *(completed 2026-05-09)*
+
+**Application — New files:**
+- `Dtos/BrandSettingsDto.cs` — response DTO (Id, CompanyId, PrimaryColor, SecondaryColor, AccentColor, Theme, LogoUrl)
+- `Dtos/CreateBrandSettingsRequest.cs` — create request DTO
+- `Dtos/UpdateBrandSettingsRequest.cs` — update request DTO
+
+**Application — Modified files:**
+- `Services/Interfaces/IBrandSettingsService.cs` — refactored to return `BrandSettingsDto` instead of entity; `CreateAsync` and `UpdateAsync` now accept DTOs + `companyId`
+- `Services/BrandSettingsService.cs` — refactored: accepts DTOs, maps to/from entity with `ToDto()`, `companyId` set from parameter (not from entity input)
+
+**API — Modified files:**
+- `Controllers/Admin/BrandSettingsController.cs` — full refactor:
+  - Uses DTOs instead of domain entities
+  - `CompanyId` resolved from JWT claims (`int?` — null for SuperAdmin)
+  - SuperAdmin can pass `?companyId=X` query param to target any company
+  - Non-SuperAdmin users get `403 Forbid` if they try to access another company's branding
+  - Endpoints: `GET /api/brandsettings`, `POST /api/brandsettings`, `PUT /api/brandsettings`
+
+**Key design:**
+- Admin/User → `CompanyId` auto-resolved from JWT, can only access own company
+- SuperAdmin → must pass `?companyId=X`, can access any company
+
+---
+
+## Phase 5 — User Management *(completed 2026-05-10)*
+
+**Application — New files:**
+- `Dtos/UserDto.cs` — response DTO (Id, Email, CompanyId, Role, IsActive, CreatedAt)
+- `Dtos/UpdateUserRequest.cs` — partial update (Role?, IsActive?)
+- `Services/Interfaces/IUserService.cs` — `GetByCompanyAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeactivateAsync`
+- `Services/UserService.cs` — implementation with password hashing and `ToDto` mapping
+
+**API — New files:**
+- `Controllers/Admin/UserController.cs`:
+  - `GET    /api/user?companyId=X` — list users for a company (Admin: own company, SuperAdmin: any)
+  - `GET    /api/user/{id}` — get single user
+  - `POST   /api/user` — create user (uses existing `RegisterRequest` DTO)
+  - `PUT    /api/user/{id}` — update role / active status
+  - `DELETE /api/user/{id}` — soft deactivate (sets `IsActive = false`)
+
+**API — Program.cs modified:**
+- Added `AddScoped<IUserService, UserService>()`
+
+**Access rules:**
+| Action | SuperAdmin | Admin | User |
+|--------|-----------|-------|------|
+| List users | Any company (`?companyId=X`) | Own company only | ❌ |
+| Create user | Any company, any role | Own company, cannot create SuperAdmin | ❌ |
+| Update user | Any user | Own company, cannot promote to SuperAdmin | ❌ |
+| Deactivate user | Any user | Own company only | ❌ |
+
+---
+
+## Phase 6 — Audit Trail & Login History *(completed 2026-05-10)*
+
+**Domain — New files:**
+- `Entities/AuditLog.cs` — UserId, UserEmail, CompanyId, Action, EntityType, EntityId, Details, Timestamp
+- `Entities/LoginHistory.cs` — UserId, Email, CompanyId, IpAddress, UserAgent, Success, FailureReason, Timestamp
+- `Interfaces/IAuditLogRepository.cs` — AddAsync, GetByCompanyAsync, GetAllAsync, GetPagedAsync
+- `Interfaces/ILoginHistoryRepository.cs` — AddAsync, GetByUserAsync, GetByCompanyAsync, GetAllAsync, GetPagedAsync
+
+**Infrastructure — New files:**
+- `Repositories/AuditLogRepository.cs` — EF Core implementation with company filtering and pagination
+- `Repositories/LoginHistoryRepository.cs` — EF Core implementation with company/user filtering and pagination
+
+**Infrastructure — Modified files:**
+- `Persistence/AppDbContext.cs`:
+  - Added `DbSet<AuditLog>` and `DbSet<LoginHistory>`
+  - Entity config: indexes on CompanyId, Timestamp, UserId for efficient querying
+
+**Application — New files:**
+- `Dtos/AuditLogDto.cs` — response DTO
+- `Dtos/LoginHistoryDto.cs` — response DTO
+- `Services/Interfaces/IAuditService.cs` — LogAsync, GetPagedAsync, GetLoginHistoryPagedAsync
+- `Services/AuditService.cs` — implementation with ToDto mappings
+
+**Application — Modified files:**
+- `Services/Interfaces/IAuthService.cs` — LoginAsync now accepts `ipAddress` and `userAgent` params
+- `Services/AuthService.cs` — records every login attempt to LoginHistory (success/failure with reason, IP, UserAgent)
+
+**API — New files:**
+- `Controllers/Admin/AuditController.cs`:
+  - `GET /api/audit/logs?page=1&pageSize=50` — paginated audit trail
+  - `GET /api/audit/logins?page=1&pageSize=50` — paginated login history
+  - SuperAdmin sees all; Admin sees own company only
+
+**API — Modified files:**
+- `Controllers/AuthController.cs` — passes `RemoteIpAddress` and `User-Agent` header to LoginAsync
+- `Program.cs` — registered IAuditLogRepository, ILoginHistoryRepository, IAuditService
+
+**Migration:** `AddAuditLogAndLoginHistory`
+
+**Login history records:**
+- Success: userId, email, companyId, IP, UserAgent, `Success = true`
+- Failure (user not found): email, `FailureReason = "User not found"`
+- Failure (inactive): userId, email, `FailureReason = "Account inactive"`
+- Failure (bad password): userId, email, `FailureReason = "Invalid password"`

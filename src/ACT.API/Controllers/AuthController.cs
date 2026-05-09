@@ -23,7 +23,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var result = await _authService.LoginAsync(request);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var userAgent = Request.Headers["User-Agent"].FirstOrDefault();
+        var result = await _authService.LoginAsync(request, ip, userAgent);
         if (result == null)
             return Unauthorized(new { message = "Invalid email or password." });
 

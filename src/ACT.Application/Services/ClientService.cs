@@ -14,7 +14,7 @@ public class ClientService : IClientService
         _clientRepository = clientRepository;
     }
 
-    public async Task<IEnumerable<ClientDto>> GetAllAsync(int companyId, bool includeArchived = false)
+    public async Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeArchived = false)
     {
         var clients = await _clientRepository.GetAllAsync(companyId, includeArchived);
         return clients.Select(ToDto);
@@ -52,7 +52,7 @@ public class ClientService : IClientService
         await _clientRepository.SaveChangesAsync();
     }
 
-    public async Task<PagedResult<ClientDto>> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<PagedResult<ClientDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
         var (items, totalCount) = await _clientRepository.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<ClientDto>

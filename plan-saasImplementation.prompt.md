@@ -78,10 +78,8 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [x] SuperAdmin endpoints (company CRUD, user creation) require `[Authorize(Roles = "SuperAdmin")]`
 - [ ] Test login → CRUD flow end-to-end
 
-### 3.5 Google / OAuth login (optional, after JWT works)
-- [ ] Add ASP.NET Core External Login with Google provider
-- [ ] Map external login to internal User + CompanyId
-- [ ] Test OAuth flow
+### 3.5 ~~Google / OAuth login~~ — DEFERRED to Phase 7
+> **Deferred**: Will be implemented alongside billing/self-service signup in Phase 7.
 
 ### Future: Option B — Self-Service Signup (Phase 7)
 > When billing is ready, add a **public** `POST /auth/signup` endpoint that:
@@ -94,30 +92,50 @@ Check off each item as it is completed. Execute phases in order — each phase k
 
 ---
 
-## Phase 4 — Branding & Settings
+## Phase 4 — Branding & Settings *(completed 2026-05-09)*
 
-- [ ] Verify `BrandSettings` is already scoped to `CompanyId` ✓
-- [ ] Update `BrandSettingsService` to use auth-based `CompanyId` (remove hardcoded values)
-- [ ] Test brand CRUD per company via Scalar
+- [x] Verify `BrandSettings` is already scoped to `CompanyId` ✓
+- [x] Update `BrandSettingsService` to use auth-based `CompanyId` (remove hardcoded values)
+- [x] Refactor controller to use DTOs (`BrandSettingsDto`, `CreateBrandSettingsRequest`, `UpdateBrandSettingsRequest`)
+- [x] Controller uses JWT `companyId` claim; SuperAdmin can pass `?companyId=X` query param
+- [x] Non-SuperAdmin users can only access their own company's branding (Forbid check)
+- [ ] Test brand CRUD per company via Swagger
 - [ ] Test frontend applies company-specific branding
 
 ---
 
-## Phase 5 — User Management
+## Phase 5 — User Management *(completed 2026-05-10)*
 
-- [ ] Add endpoints: invite user, list users, update user role, remove user (scoped to company admin)
-- [ ] Add `IUserService` + `UserService`
-- [ ] Add `UserController` under `Controllers/Admin/`
-- [ ] Test user invitation and management
+- [x] Add `UserDto` and `UpdateUserRequest` DTOs
+- [x] Add `IUserService` + `UserService` (create, list, update role, deactivate)
+- [x] Add `UserController` under `Controllers/Admin/` with role-based access
+- [x] Admin can list/create/update/deactivate users in their own company
+- [x] SuperAdmin can manage users across all companies (via `?companyId=X`)
+- [x] Admin cannot promote users to SuperAdmin
+- [x] Register `IUserService` in `Program.cs`
+- [ ] Test user management via Swagger
 
 ---
 
-## Phase 6 — API & Data Security
+## Phase 6 — Audit Trail & Login History *(completed 2026-05-10)*
 
-- [ ] Add company-scoping middleware (enforce `CompanyId` on every query automatically)
-- [ ] Add rate limiting per company/user (`AspNetCoreRateLimit` or .NET 9 built-in)
-- [ ] Add structured logging (Serilog recommended)
-- [ ] Test data isolation: Company A cannot see Company B's data
+- [x] Add `AuditLog` entity (UserId, UserEmail, CompanyId, Action, EntityType, EntityId, Details, Timestamp)
+- [x] Add `LoginHistory` entity (UserId, Email, CompanyId, IpAddress, UserAgent, Success, FailureReason, Timestamp)
+- [x] Add `IAuditLogRepository` + `AuditLogRepository`
+- [x] Add `ILoginHistoryRepository` + `LoginHistoryRepository`
+- [x] Add `AuditLogDto`, `LoginHistoryDto` DTOs
+- [x] Add `IAuditService` + `AuditService` (log actions, paginated queries)
+- [x] Wire login history into `AuthService` — records every login attempt (success/failure, IP, UserAgent)
+- [x] Add `AuditController` under `Controllers/Admin/` — paginated audit logs and login history
+- [x] Add DbSets + entity config to `AppDbContext` (indexes on CompanyId, Timestamp, UserId)
+- [x] Register repositories and services in `Program.cs`
+- [x] Add EF migration, update database
+- [ ] Test audit trail and login history via Swagger
+
+> **Deferred items** (production-hardening, not needed now):
+> - Company-scoping middleware (already enforced in controllers/repositories)
+> - Rate limiting (needed when multiple real tenants exist)
+> - Structured logging / Serilog (built-in ILogger is sufficient for dev)
 
 ---
 

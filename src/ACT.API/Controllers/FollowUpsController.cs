@@ -18,7 +18,14 @@ public class FollowUpsController : ControllerBase
         _service = service;
     }
 
-    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
+    private int? CompanyId
+    {
+        get
+        {
+            var claim = User.FindFirstValue("companyId");
+            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
+        }
+    }
 
     // GET /api/followups/due
     // All outstanding follow-ups — used by the Treatments page

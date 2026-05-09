@@ -19,12 +19,21 @@ public class ClientController : ControllerBase
         _clientService = clientService;
     }
 
-    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
+    private int? CompanyId
+    {
+        get
+        {
+            var claim = User.FindFirstValue("companyId");
+            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
+        }
+    }
 
     [HttpPost]
     public async Task<ActionResult> Create(Client client)
     {
-        var createdClient = await _clientService.CreateAsync(CompanyId, client);
+        if (CompanyId == null)
+            return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
+        var createdClient = await _clientService.CreateAsync(CompanyId.Value, client);
         return CreatedAtAction(nameof(GetPaged), new { id = createdClient.Id }, createdClient);
     }
 

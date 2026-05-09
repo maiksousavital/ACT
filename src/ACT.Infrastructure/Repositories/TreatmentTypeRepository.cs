@@ -14,11 +14,12 @@ public class TreatmentTypeRepository : ITreatmentTypeRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int companyId)
+    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int? companyId)
     {
-        return await _context.TreatmentTypes
-            .Where(tt => tt.CompanyId == companyId && tt.IsActive)
-            .ToListAsync();
+        var query = _context.TreatmentTypes.Where(tt => tt.IsActive);
+        if (companyId.HasValue)
+            query = query.Where(tt => tt.CompanyId == companyId.Value);
+        return await query.ToListAsync();
     }
 
     public async Task<TreatmentType?> GetByIdAsync(int id)
@@ -37,11 +38,12 @@ public class TreatmentTypeRepository : ITreatmentTypeRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<(IEnumerable<TreatmentType> Items, int TotalCount)> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<(IEnumerable<TreatmentType> Items, int TotalCount)> GetPagedAsync(int? companyId, int page, int pageSize)
     {
-        var query = _context.TreatmentTypes
-            .Where(tt => tt.CompanyId == companyId)
-            .OrderBy(tt => tt.Name);
+        var query = _context.TreatmentTypes.AsQueryable();
+        if (companyId.HasValue)
+            query = query.Where(tt => tt.CompanyId == companyId.Value);
+        query = query.OrderBy(tt => tt.Name);
         var totalCount = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return (items, totalCount);

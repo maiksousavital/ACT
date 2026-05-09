@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<BrandSettings> BrandSettings => Set<BrandSettings>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -115,6 +117,30 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(u => u.CompanyId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── AuditLog ──────────────────────────────────────────────────────────
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.Property(a => a.UserEmail).HasMaxLength(200);
+            e.Property(a => a.Action).IsRequired().HasMaxLength(50);
+            e.Property(a => a.EntityType).IsRequired().HasMaxLength(100);
+            e.HasIndex(a => a.CompanyId);
+            e.HasIndex(a => a.Timestamp);
+        });
+
+        // ── LoginHistory ──────────────────────────────────────────────────────
+        modelBuilder.Entity<LoginHistory>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.Property(l => l.Email).IsRequired().HasMaxLength(200);
+            e.Property(l => l.IpAddress).HasMaxLength(50);
+            e.Property(l => l.UserAgent).HasMaxLength(500);
+            e.Property(l => l.FailureReason).HasMaxLength(200);
+            e.HasIndex(l => l.UserId);
+            e.HasIndex(l => l.CompanyId);
+            e.HasIndex(l => l.Timestamp);
         });
 
         // ── Seed data ─────────────────────────────────────────────────────────

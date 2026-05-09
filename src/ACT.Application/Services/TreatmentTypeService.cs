@@ -14,7 +14,7 @@ public class TreatmentTypeService : ITreatmentTypeService
         _treatmentTypeRepository = treatmentTypeRepository;
     }
 
-    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int companyId)
+    public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int? companyId)
     {
         return await _treatmentTypeRepository.GetAllActiveAsync(companyId);
     }
@@ -61,7 +61,7 @@ public class TreatmentTypeService : ITreatmentTypeService
         return ToDto(entity);
     }
 
-    public async Task<PagedResult<TreatmentTypeDto>> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<PagedResult<TreatmentTypeDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
         var (items, totalCount) = await _treatmentTypeRepository.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<TreatmentTypeDto>

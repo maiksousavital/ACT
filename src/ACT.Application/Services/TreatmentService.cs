@@ -23,13 +23,13 @@ public class TreatmentService : ITreatmentService
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
-    public async Task<IEnumerable<TreatmentDto>> GetDueAsync(int companyId)
+    public async Task<IEnumerable<TreatmentDto>> GetDueAsync(int? companyId)
     {
         var treatments = await _treatments.GetDueAsync(companyId);
         return treatments.Select(ToDto);
     }
 
-    public async Task<IEnumerable<TreatmentDto>> GetTodayAsync(int companyId)
+    public async Task<IEnumerable<TreatmentDto>> GetTodayAsync(int? companyId)
     {
         var treatments = await _treatments.GetTodayAsync(companyId);
         return treatments.Select(ToDto);
@@ -47,7 +47,7 @@ public class TreatmentService : ITreatmentService
         return treatment == null ? null : ToDto(treatment);
     }
 
-    public async Task<PagedResult<TreatmentDto>> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<PagedResult<TreatmentDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
         var (items, totalCount) = await _treatments.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<TreatmentDto>

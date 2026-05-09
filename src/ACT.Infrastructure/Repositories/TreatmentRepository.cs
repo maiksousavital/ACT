@@ -14,31 +14,27 @@ public class TreatmentRepository : ITreatmentRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Treatment>> GetDueAsync(int companyId)
+    public async Task<IEnumerable<Treatment>> GetDueAsync(int? companyId)
     {
-        return await _context.Treatments
+        var query = _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
-            .Where(t =>
-                t.CompanyId == companyId &&
-                t.FollowedUpAt == null &&
-                t.NextFollowUpDate.Date <= DateTime.UtcNow.Date)
-            .OrderBy(t => t.NextFollowUpDate)
-            .ToListAsync();
+            .Where(t => t.FollowedUpAt == null && t.NextFollowUpDate.Date <= DateTime.UtcNow.Date);
+        if (companyId.HasValue)
+            query = query.Where(t => t.CompanyId == companyId.Value);
+        return await query.OrderBy(t => t.NextFollowUpDate).ToListAsync();
     }
     
-    public async Task<IEnumerable<Treatment>> GetTodayAsync(int companyId)
+    public async Task<IEnumerable<Treatment>> GetTodayAsync(int? companyId)
     {
         var today = DateTime.UtcNow.Date;
-        return await _context.Treatments
+        var query = _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
-            .Where(t =>
-                t.CompanyId == companyId &&
-                t.FollowedUpAt == null &&
-                t.NextFollowUpDate.Date == today)
-            .OrderBy(t => t.Client.LastName)
-            .ToListAsync();
+            .Where(t => t.FollowedUpAt == null && t.NextFollowUpDate.Date == today);
+        if (companyId.HasValue)
+            query = query.Where(t => t.CompanyId == companyId.Value);
+        return await query.OrderBy(t => t.Client.LastName).ToListAsync();
     }
 
     public async Task<IEnumerable<Treatment>> GetByClientAsync(int clientId)
@@ -68,15 +64,17 @@ public class TreatmentRepository : ITreatmentRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<(IEnumerable<Treatment> Items, int TotalCount)> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<(IEnumerable<Treatment> Items, int TotalCount)> GetPagedAsync(int? companyId, int page, int pageSize)
     {
         var query = _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
-            .Where(t => t.CompanyId == companyId)
-            .OrderByDescending(t => t.TreatmentDate);
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            .AsQueryable();
+        if (companyId.HasValue)
+            query = query.Where(t => t.CompanyId == companyId.Value);
+        var ordered = query.OrderByDescending(t => t.TreatmentDate);
+        var totalCount = await ordered.CountAsync();
+        var items = await ordered.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return (items, totalCount);
     }
 

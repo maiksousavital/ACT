@@ -14,11 +14,14 @@ public class ClientRepository : IClientRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Client>> GetAllAsync(int companyId, bool includeArchived = false)
+    public async Task<IEnumerable<Client>> GetAllAsync(int? companyId, bool includeArchived = false)
     {
-        return await _context.Clients
-            .Where(c => c.CompanyId == companyId && (includeArchived || !c.IsArchived))
-            .ToListAsync();
+        var query = _context.Clients.AsQueryable();
+        if (companyId.HasValue)
+            query = query.Where(c => c.CompanyId == companyId.Value);
+        if (!includeArchived)
+            query = query.Where(c => !c.IsArchived);
+        return await query.ToListAsync();
     }
 
     public async Task<Client?> GetByIdAsync(int id)
@@ -44,11 +47,12 @@ public class ClientRepository : IClientRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<(IEnumerable<Client> Items, int TotalCount)> GetPagedAsync(int companyId, int page, int pageSize)
+    public async Task<(IEnumerable<Client> Items, int TotalCount)> GetPagedAsync(int? companyId, int page, int pageSize)
     {
-        var query = _context.Clients
-            .Where(c => c.CompanyId == companyId)
-            .OrderBy(c => c.LastName);
+        var query = _context.Clients.AsQueryable();
+        if (companyId.HasValue)
+            query = query.Where(c => c.CompanyId == companyId.Value);
+        query = query.OrderBy(c => c.LastName);
         var totalCount = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return (items, totalCount);

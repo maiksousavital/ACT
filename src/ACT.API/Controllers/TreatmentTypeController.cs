@@ -19,7 +19,14 @@ public class TreatmentTypeController : ControllerBase
         _treatmentTypeService = treatmentTypeService;
     }
 
-    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
+    private int? CompanyId
+    {
+        get
+        {
+            var claim = User.FindFirstValue("companyId");
+            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
+        }
+    }
 
     // GET /api/treatmenttype/paged?page=1&pageSize=20
     [HttpGet("paged")]
@@ -48,7 +55,9 @@ public class TreatmentTypeController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TreatmentTypeDto>> Create([FromBody] CreateTreatmentTypeRequest request)
     {
-        var created = await _treatmentTypeService.CreateAsync(CompanyId, request);
+        if (CompanyId == null)
+            return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
+        var created = await _treatmentTypeService.CreateAsync(CompanyId.Value, request);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

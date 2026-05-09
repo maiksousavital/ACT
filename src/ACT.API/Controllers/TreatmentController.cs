@@ -18,7 +18,14 @@ public class TreatmentsController : ControllerBase
         _service = service;
     }
 
-    private int CompanyId => int.Parse(User.FindFirstValue("companyId")!);
+    private int? CompanyId
+    {
+        get
+        {
+            var claim = User.FindFirstValue("companyId");
+            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
+        }
+    }
 
     // POST /api/treatments
     [HttpPost]
@@ -27,7 +34,9 @@ public class TreatmentsController : ControllerBase
     {
         try
         {
-            var result = await _service.CreateAsync(CompanyId, request);
+            if (CompanyId == null)
+                return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
+            var result = await _service.CreateAsync(CompanyId.Value, request);
             return CreatedAtAction(nameof(GetPaged),
                 new { clientId = result.ClientId }, result);
         }
