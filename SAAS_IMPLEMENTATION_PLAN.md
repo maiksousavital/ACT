@@ -141,7 +141,9 @@ Check off each item as it is completed. Execute phases in order — each phase k
 
 ---
 
-## Phase 7 — Subscription & Billing (last)
+## Phase 7 — Subscription & Billing — DEFERRED
+
+> **Deferred**: Cannot subscribe to payment gateways without NZ business number yet.
 
 - [ ] Add `Plan` entity (Free, Pro, Enterprise) with feature flags
 - [ ] Add `Subscription` entity linked to Company

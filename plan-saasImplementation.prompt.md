@@ -139,13 +139,22 @@ Check off each item as it is completed. Execute phases in order — each phase k
 
 ---
 
-## Phase 7 — Subscription & Billing (last)
+## Phase 7 — Subscription & Billing — DEFERRED
+
+> **Deferred**: Cannot subscribe to payment gateways without NZ business number yet.
+> Will implement when business registration is complete. Plan remains unchanged — it's additive.
 
 - [ ] Add `Plan` entity (Free, Pro, Enterprise) with feature flags
 - [ ] Add `Subscription` entity linked to Company
 - [ ] Integrate Stripe (checkout session + webhooks)
 - [ ] Gate features by plan (middleware or policy-based)
 - [ ] Test subscription creation, upgrade, cancellation
+
+---
+
+## Frontend Implementation
+
+> See **`plan-frontendImplementation.prompt.md`** for the detailed React PWA frontend plan (Phases F1–F9).
 
 ---
 
