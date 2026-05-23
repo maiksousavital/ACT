@@ -38,8 +38,16 @@ public class UserController : ControllerBase
     public async Task<ActionResult<IEnumerable<UserDto>>> GetByCompany([FromQuery] int? companyId = null)
     {
         var targetCompanyId = companyId ?? CompanyId;
+
+        // SuperAdmin with no filter → return all users
+        if (IsSuperAdmin && targetCompanyId == null)
+        {
+            var allUsers = await _userService.GetAllAsync();
+            return Ok(allUsers);
+        }
+
         if (targetCompanyId == null)
-            return BadRequest(new { message = "companyId query param is required for SuperAdmin." });
+            return BadRequest(new { message = "companyId query param is required." });
 
         // Non-SuperAdmin can only list their own company's users
         if (!IsSuperAdmin && targetCompanyId != CompanyId)

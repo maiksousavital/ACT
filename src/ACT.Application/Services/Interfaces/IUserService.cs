@@ -4,6 +4,7 @@ namespace ACT.Application.Services.Interfaces;
 
 public interface IUserService
 {
+    Task<IEnumerable<UserDto>> GetAllAsync();
     Task<IEnumerable<UserDto>> GetByCompanyAsync(int companyId);
     Task<UserDto?> GetByIdAsync(int id);
     Task<UserDto> CreateAsync(RegisterRequest request);
