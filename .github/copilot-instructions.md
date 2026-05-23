@@ -20,9 +20,20 @@ src/
   ACT.Application/     # DTOs, Service interfaces & implementations (depends on Domain)
   ACT.Infrastructure/  # Repositories, DbContext, Migrations (depends on Application + Domain)
   ACT.API/             # Controllers, Program.cs DI setup (depends on all)
+frontend/              # React PWA (Vite + TypeScript + Bootstrap 5)
 tests/
   ACT.Tests/           # Unit and integration tests
 ```
+
+## Frontend
+
+- **Location**: `frontend/` folder (monorepo alongside backend `src/`)
+- **Stack**: React 18+, TypeScript, Vite, React Bootstrap + Bootstrap 5
+- **Styling**: No inline `style={}` — use Bootstrap utility classes + CSS Modules (`.module.css`) only
+- **Default palette**: Vibrant indigo/cyan/emerald theme via `:root` CSS variables in `frontend/src/styles/theme.css`
+- **Theming**: Default palette for unauthenticated pages; companies with BrandSettings override via JS after login
+- **Responsive**: Mobile-first, Bootstrap breakpoints, fully responsive across all devices (320px → 1400px+)
+- **API types**: Generated from OpenAPI spec (`openapi-typescript`)
 
 ## Key Conventions
 

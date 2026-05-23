@@ -1,0 +1,9 @@
+.loginPage {
+  min-height: 100vh;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+}
+

@@ -1,5 +1,19 @@
 # ACT Frontend Implementation Plan (React PWA)
 
+## Project Location
+
+**Monorepo** — frontend lives at `ACT/frontend/` alongside the backend `src/` folder.
+
+```
+ACT/
+├── src/              # .NET backend
+├── frontend/         # React PWA (Vite + TypeScript + Bootstrap 5)
+├── tests/
+└── ACT.sln
+```
+
+---
+
 ## Tech Stack
 
 - **Framework**: React 18+ with TypeScript
@@ -18,7 +32,9 @@
 ## Architecture
 
 ```
-src/
+frontend/src/
+├── styles/
+│   └── theme.css           # Bootstrap CSS variable overrides (default palette)
 ├── api/                    # Axios instance, API service functions
 │   ├── axiosInstance.ts    # Base config, JWT interceptor
 │   ├── authApi.ts          # login, register
@@ -79,39 +95,39 @@ src/
 ### Phase F1 — Project Setup & Auth (Login Page)
 
 #### F1.1 Scaffold project
-- [ ] Create Vite + React + TypeScript project
-- [ ] Install dependencies: `react-router-dom`, `axios`, `react-bootstrap`, `bootstrap`, `react-hook-form`, `zod`
-- [ ] Import Bootstrap CSS in `main.tsx` (`import 'bootstrap/dist/css/bootstrap.min.css'`)
-- [ ] Configure Vite PWA plugin (`vite-plugin-pwa`)
-- [ ] Set up folder structure as above
-- [ ] Create `.env` with `VITE_API_URL=http://localhost:5105/api`
+- [x] Create Vite + React + TypeScript project
+- [x] Install dependencies: `react-router-dom`, `axios`, `react-bootstrap`, `bootstrap`, `react-hook-form`, `zod`
+- [x] Import Bootstrap CSS in `main.tsx` (`import 'bootstrap/dist/css/bootstrap.min.css'`)
+- [x] Configure Vite PWA plugin (`vite-plugin-pwa`)
+- [x] Set up folder structure as above
+- [x] Create `.env` with `VITE_API_URL=http://localhost:5105/api`
 
 #### F1.2 Axios instance & JWT interceptor
-- [ ] Create `api/axiosInstance.ts` — base URL from env
-- [ ] Add request interceptor: attach `Authorization: Bearer <token>` from localStorage
-- [ ] Add response interceptor: on 401, redirect to login
-- [ ] Create `utils/token.ts` — `getToken()`, `setToken()`, `removeToken()`, `isTokenExpired()`
+- [x] Create `api/axiosInstance.ts` — base URL from env
+- [x] Add request interceptor: attach `Authorization: Bearer <token>` from localStorage
+- [x] Add response interceptor: on 401, redirect to login
+- [x] Create `utils/token.ts` — `getToken()`, `setToken()`, `removeToken()`, `isTokenExpired()`
 
 #### F1.3 Auth context & types
-- [ ] Create `types/auth.ts` — `LoginRequest`, `AuthResponse`, `User` (decoded from JWT)
-- [ ] Create `contexts/AuthContext.tsx` — stores user, token, role, companyId
-- [ ] Expose `login()`, `logout()`, `isAuthenticated`, `user`, `isSuperAdmin`, `isAdmin`
-- [ ] On app load, check localStorage for existing token, validate expiry
+- [x] Create `types/auth.ts` — `LoginRequest`, `AuthResponse`, `User` (decoded from JWT)
+- [x] Create `contexts/AuthContext.tsx` — stores user, token, role, companyId
+- [x] Expose `login()`, `logout()`, `isAuthenticated`, `user`, `isSuperAdmin`, `isAdmin`
+- [x] On app load, check localStorage for existing token, validate expiry
 
 #### F1.4 Login page
-- [ ] Create `pages/Login/LoginPage.tsx`
-- [ ] Form: email + password (React Hook Form + Zod validation)
-- [ ] On submit: call `POST /api/auth/login`, store token, redirect to dashboard
-- [ ] Show error on invalid credentials
-- [ ] Responsive design (works on mobile/tablet)
+- [x] Create `pages/Login/LoginPage.tsx`
+- [x] Form: email + password (React Hook Form + Zod validation)
+- [x] On submit: call `POST /api/auth/login`, store token, redirect to dashboard
+- [x] Show error on invalid credentials
+- [x] Responsive design (works on mobile/tablet)
 
 #### F1.5 Protected routes & layout
-- [ ] Create `components/Auth/ProtectedRoute.tsx` — redirects to `/login` if not authenticated
-- [ ] Create `components/Auth/RoleGuard.tsx` — shows 403 if user lacks required role
-- [ ] Create `components/Layout/AppShell.tsx` — sidebar + top bar + main content area
-- [ ] Sidebar: show/hide menu items based on role (SuperAdmin sees Admin section)
-- [ ] Top bar: user email, role badge, logout button
-- [ ] Wire routes in `App.tsx`
+- [x] Create `components/Auth/ProtectedRoute.tsx` — redirects to `/login` if not authenticated
+- [x] Create `components/Auth/RoleGuard.tsx` — shows 403 if user lacks required role
+- [x] Create `components/Layout/AppShell.tsx` — sidebar + top bar + main content area
+- [x] Sidebar: show/hide menu items based on role (SuperAdmin sees Admin section)
+- [x] Top bar: user email, role badge, logout button
+- [x] Wire routes in `App.tsx`
 
 ---
 
@@ -284,12 +300,59 @@ src/
 |-------|----------|
 | **State management** | React Context + useReducer (simple, no extra dependency) |
 | **Styling** | React Bootstrap + Bootstrap 5 (component-based, responsive, easy branding via CSS vars) |
+| **No inline CSS** | Never use `style={}` props — Bootstrap utilities + CSS Modules (`.module.css`) only |
+| **Responsive** | Mobile-first, Bootstrap breakpoints, tested at 320px / 768px / 1200px+ |
 | **Forms** | React Hook Form + Zod (type-safe, performant) |
 | **Tables** | React Bootstrap Table + custom Pagination |
 | **PWA** | Vite PWA plugin (service worker, manifest, install prompt) |
 | **Mobile** | PWA (not React Native) — one codebase, installable, works offline |
 | **Auth storage** | JWT in localStorage (simple; upgrade to httpOnly cookie if needed) |
 | **Brand theming** | Override Bootstrap CSS variables (`--bs-primary`, etc.) on `:root` |
+| **API types** | Generated from OpenAPI spec (`openapi-typescript`) to stay in sync with backend |
+
+---
+
+## Styling Rules
+
+1. **No inline styles** — never use `style={}` in JSX. All styling through Bootstrap utility classes or CSS Modules.
+2. **Bootstrap utilities** — for layout, spacing, typography, and responsive visibility (`d-none d-md-block`, etc.).
+3. **CSS Modules** — for component-specific styles, co-located as `ComponentName.module.css`.
+4. **Responsive** — mobile-first approach. Sidebar collapses to off-canvas hamburger on < 992px. Tables use `table-responsive` or card layout on mobile. Forms full-width on mobile, constrained on desktop.
+
+---
+
+## Default Color Palette
+
+Defined in `frontend/src/styles/theme.css` (imported in `main.tsx` after Bootstrap CSS):
+
+```css
+:root {
+  --bs-primary: #6366F1;       /* Indigo 500 — vibrant purple-blue */
+  --bs-secondary: #06B6D4;    /* Cyan 500 — fresh teal */
+  --bs-success: #10B981;      /* Emerald 500 */
+  --bs-danger: #EF4444;       /* Red 500 */
+  --bs-warning: #F59E0B;      /* Amber 500 */
+  --bs-info: #8B5CF6;         /* Violet 500 */
+  --bs-light: #F8FAFC;        /* Slate 50 */
+  --bs-dark: #1E293B;         /* Slate 800 */
+}
+```
+
+**Theming logic:**
+- The vibrant palette is the **default/unauthenticated look** (login page, public pages, companies without BrandSettings).
+- Companies with BrandSettings override these variables via JS on `document.documentElement` **after login**.
+
+---
+
+## Responsive Design Requirements
+
+- **Mobile-first**: all components designed for 320px first, then enhanced for larger screens.
+- **Breakpoints**: Bootstrap 5 — sm: 576px, md: 768px, lg: 992px, xl: 1200px, xxl: 1400px.
+- **Navigation**: sidebar collapses to off-canvas hamburger on screens < 992px.
+- **Tables**: `table-responsive` wrapper; consider card-based layout on mobile for complex data.
+- **Forms**: full-width on mobile, `max-width: 600px` on desktop.
+- **Testing**: every page must be verified at mobile (320px), tablet (768px), and desktop (1200px+).
+- **Fully responsive**: the entire application must work seamlessly across all device sizes — phone, tablet, laptop, and desktop.
 
 ---
 
