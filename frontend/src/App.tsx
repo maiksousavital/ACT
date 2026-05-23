@@ -8,6 +8,8 @@ import { DashboardPage } from './pages/Dashboard/DashboardPage'
 import { ClientListPage } from './pages/Clients/ClientListPage'
 import { ClientFormPage } from './pages/Clients/ClientFormPage'
 import { ClientDetailPage } from './pages/Clients/ClientDetailPage'
+import { TreatmentTypeListPage } from './pages/TreatmentTypes/TreatmentTypeListPage'
+import { TreatmentTypeFormPage } from './pages/TreatmentTypes/TreatmentTypeFormPage'
 
 export default function App() {
   return (
@@ -29,7 +31,10 @@ export default function App() {
             <Route path="/clients/new" element={<ClientFormPage />} />
             <Route path="/clients/:id" element={<ClientDetailPage />} />
             <Route path="/clients/:id/edit" element={<ClientFormPage />} />
-            {/* Phase F4-F7 routes will be added here */}
+            <Route path="/treatment-types" element={<TreatmentTypeListPage />} />
+            <Route path="/treatment-types/new" element={<TreatmentTypeFormPage />} />
+            <Route path="/treatment-types/:id/edit" element={<TreatmentTypeFormPage />} />
+            {/* Phase F5-F7 routes will be added here */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

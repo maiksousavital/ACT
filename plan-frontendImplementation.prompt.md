@@ -169,16 +169,16 @@ frontend/src/
 ### Phase F4 — Treatment Types Module
 
 #### F4.1 Treatment Type types & API
-- [ ] Create `types/treatmentType.ts`
-- [ ] Create `api/treatmentTypeApi.ts`
+- [x] Create `types/treatmentType.ts`
+- [x] Create `api/treatmentTypeApi.ts`
 
 #### F4.2 Treatment Type list page
-- [ ] Paginated table: Name, Follow-Up Interval, Active status, Actions
-- [ ] "Add Treatment Type" button
+- [x] Paginated table: Name, Follow-Up Interval, Active status, Actions
+- [x] "Add Treatment Type" button
 
 #### F4.3 Treatment Type form (create/edit)
-- [ ] Fields: Name, FollowUpIntervalDays (dropdown from enum), IsActive (toggle)
-- [ ] Dropdown values fetched from `GET /api/treatmenttype/add-edit-metadata`
+- [x] Fields: Name, FollowUpIntervalDays (dropdown from enum), IsActive (toggle)
+- [x] Dropdown values fetched from `GET /api/treatmenttype/add-edit-metadata`
 
 ---
 
