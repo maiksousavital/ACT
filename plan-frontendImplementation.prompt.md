@@ -206,16 +206,16 @@ frontend/src/
 ### Phase F6 — Settings & Branding (Admin)
 
 #### F6.1 Brand settings page
-- [ ] Create `pages/Settings/BrandSettingsPage.tsx`
-- [ ] Fields: PrimaryColor (color picker), SecondaryColor, AccentColor, Theme (dropdown: light/dark/custom), LogoUrl
-- [ ] Preview: show live preview of colour changes
-- [ ] On save: `PUT /api/brandsettings`
+- [x] Create `pages/Settings/BrandSettingsPage.tsx`
+- [x] Fields: PrimaryColor (color picker), SecondaryColor, AccentColor, Theme (dropdown: light/dark/custom), LogoUrl
+- [x] Preview: show live preview of colour changes
+- [x] On save: `PUT /api/brandsettings`
 
 #### F6.2 Brand context integration
-- [ ] Create `contexts/BrandContext.tsx` — fetch brand settings on login
-- [ ] Apply colours as CSS variables on `<html>` root (override Bootstrap's `--bs-primary`, `--bs-secondary`, etc.)
-- [ ] Custom `brand.css` overrides Bootstrap theme colours using CSS variables
-- [ ] Logo displayed in sidebar/top bar
+- [x] Create `contexts/BrandContext.tsx` — fetch brand settings on login
+- [x] Apply colours as CSS variables on `<html>` root (override Bootstrap's `--bs-primary`, `--bs-secondary`, etc.)
+- [x] Custom `brand.css` overrides Bootstrap theme colours using CSS variables
+- [x] Logo displayed in sidebar/top bar
 
 ---
 
