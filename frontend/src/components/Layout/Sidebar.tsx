@@ -22,10 +22,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <nav
       aria-label="Main navigation"
-      className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''} d-lg-block bg-dark text-white p-3`}
+      className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''} d-lg-block p-3`}
+      style={{ backgroundColor: 'var(--act-sidebar-bg, #1E293B)', color: 'var(--act-sidebar-text, #fff)' }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="mb-0 fw-bold text-white">ACT</h5>
+        <h5 className="mb-0 fw-bold" style={{ color: 'var(--act-sidebar-text, #fff)' }}>ACT</h5>
         <button
           className="btn btn-sm btn-outline-light d-lg-none"
           onClick={onClose}

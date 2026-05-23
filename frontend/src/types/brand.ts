@@ -4,6 +4,8 @@ export interface BrandSettingsDto {
   primaryColor?: string
   secondaryColor?: string
   accentColor?: string
+  sidebarColor?: string
+  backgroundColor?: string
   theme?: string
   logoUrl?: string
 }
@@ -12,6 +14,8 @@ export interface UpdateBrandSettingsRequest {
   primaryColor?: string
   secondaryColor?: string
   accentColor?: string
+  sidebarColor?: string
+  backgroundColor?: string
   theme?: string
   logoUrl?: string
 }

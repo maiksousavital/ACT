@@ -15,7 +15,7 @@
 }
 
 .navLink {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--act-sidebar-text-muted, rgba(255, 255, 255, 0.7));
   padding: 0.6rem 1.2rem;
   border-radius: 0.375rem;
   text-decoration: none;
@@ -27,8 +27,8 @@
 
 .navLink:hover,
 .navLinkActive {
-  color: #fff;
-  background-color: rgba(99, 102, 241, 0.3);
+  color: var(--act-sidebar-text, #fff);
+  background-color: rgba(var(--bs-primary-rgb, 99, 102, 241), 0.3);
 }
 
 .menuToggle {

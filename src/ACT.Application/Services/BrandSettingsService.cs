@@ -28,6 +28,8 @@ public class BrandSettingsService : IBrandSettingsService
             PrimaryColor = request.PrimaryColor,
             SecondaryColor = request.SecondaryColor,
             AccentColor = request.AccentColor,
+            SidebarColor = request.SidebarColor,
+            BackgroundColor = request.BackgroundColor,
             Theme = request.Theme,
             LogoUrl = request.LogoUrl
         };
@@ -45,6 +47,8 @@ public class BrandSettingsService : IBrandSettingsService
         settings.PrimaryColor = request.PrimaryColor;
         settings.SecondaryColor = request.SecondaryColor;
         settings.AccentColor = request.AccentColor;
+        settings.SidebarColor = request.SidebarColor;
+        settings.BackgroundColor = request.BackgroundColor;
         settings.Theme = request.Theme;
         settings.LogoUrl = request.LogoUrl;
 
@@ -62,6 +66,8 @@ public class BrandSettingsService : IBrandSettingsService
             PrimaryColor = s.PrimaryColor,
             SecondaryColor = s.SecondaryColor,
             AccentColor = s.AccentColor,
+            SidebarColor = s.SidebarColor,
+            BackgroundColor = s.BackgroundColor,
             Theme = s.Theme,
             LogoUrl = s.LogoUrl
         };

@@ -8,7 +8,8 @@ public class BrandSettings
     public string? PrimaryColor { get; set; }
     public string? SecondaryColor { get; set; }
     public string? AccentColor { get; set; }
+    public string? SidebarColor { get; set; }
+    public string? BackgroundColor { get; set; }
     public string? Theme { get; set; } // e.g., "light", "dark", "custom"
     public string? LogoUrl { get; set; }
-    // Add more fields as needed
 }
