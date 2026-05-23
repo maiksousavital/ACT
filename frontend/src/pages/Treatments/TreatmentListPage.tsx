@@ -94,7 +94,7 @@ export function TreatmentListPage() {
                   <small className="text-muted">
                     Showing {data.items.length} of {data.totalCount}
                   </small>
-                  <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
+                  <Pagination currentPage={page} totalPages={data.totalPages} totalCount={data.totalCount} pageSize={data.pageSize} onPageChange={setPage} />
                 </div>
               )}
             </>

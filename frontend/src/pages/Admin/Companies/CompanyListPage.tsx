@@ -68,7 +68,7 @@ export function CompanyListPage() {
               </div>
               <div className="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                 <small className="text-muted">Showing {data.items.length} of {data.totalCount}</small>
-                <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
+                <Pagination currentPage={page} totalPages={data.totalPages} totalCount={data.totalCount} pageSize={data.pageSize} onPageChange={setPage} />
               </div>
             </>
           )}

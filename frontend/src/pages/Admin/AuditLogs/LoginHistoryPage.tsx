@@ -88,7 +88,7 @@ export function LoginHistoryPage() {
               </div>
               <div className="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                 <small className="text-muted">Page {data.page} of {data.totalPages}</small>
-                <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
+                <Pagination currentPage={page} totalPages={data.totalPages} totalCount={data.totalCount} pageSize={data.pageSize} onPageChange={setPage} />
               </div>
             </>
           )}

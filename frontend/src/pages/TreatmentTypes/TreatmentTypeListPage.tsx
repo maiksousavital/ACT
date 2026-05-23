@@ -99,6 +99,8 @@ export function TreatmentTypeListPage() {
                   <Pagination
                     currentPage={page}
                     totalPages={data.totalPages}
+                    totalCount={data.totalCount}
+                    pageSize={data.pageSize}
                     onPageChange={setPage}
                   />
                 </div>
