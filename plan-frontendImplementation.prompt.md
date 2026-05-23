@@ -134,10 +134,10 @@ frontend/src/
 ### Phase F2 — Dashboard
 
 #### F2.1 Dashboard page
-- [ ] Create `pages/Dashboard/DashboardPage.tsx`
-- [ ] Cards: total clients, total treatments, today's follow-ups, overdue follow-ups
-- [ ] Fetch data from: `GET /api/client/paged`, `GET /api/followups/today`, `GET /api/followups/due`
-- [ ] Quick action buttons: "Add Client", "Add Treatment"
+- [x] Create `pages/Dashboard/DashboardPage.tsx`
+- [x] Cards: total clients, total treatments, today's follow-ups, overdue follow-ups
+- [x] Fetch data from: `GET /api/client/paged`, `GET /api/followups/today`, `GET /api/followups/due`
+- [x] Quick action buttons: "Add Client", "Add Treatment"
 
 ---
 
