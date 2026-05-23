@@ -114,7 +114,7 @@ namespace ACT.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsArchived")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("LastName")
@@ -151,7 +151,7 @@ namespace ACT.Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -171,7 +171,7 @@ namespace ACT.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            IsActive = true,
+                            IsDeleted = false,
                             Name = "Default Company"
                         });
                 });

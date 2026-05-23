@@ -205,8 +205,8 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [ ] Optionally: add "Show archived" toggle on `ClientListPage` to view archived clients
 
 ### 8.6 Verify `TotalPages` is returned after backend restart
-- [ ] Restart backend and confirm `PagedResult` now includes `totalPages` in JSON responses
-- [ ] Verify pagination works correctly on all list pages
+- [x] Restart backend and confirm `PagedResult` now includes `totalPages` in JSON responses
+- [x] Verify pagination works correctly on all list pages
 
 ---
 
