@@ -169,7 +169,7 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [ ] Test via Swagger
 
 ### 8.2 Fix User deactivate — frontend uses PUT, backend uses DELETE
-- [ ] Update frontend `userApi.ts` to use `DELETE /user/${id}` instead of `PUT /user/${id}/deactivate`
+- [x] Update frontend `userApi.ts` to use `DELETE /user/${id}` instead of `PUT /user/${id}/deactivate`
 
 ### 8.3 Simplify `UpdateTreatmentRequest` backend DTO
 - [ ] Remove fields that shouldn't be editable from the frontend (`ClientId`, `TreatmentTypeId`, `NextFollowUpDate`, `FollowedUpAt`, `FollowUpNotes`) — keep only `TreatmentDate` and `Notes`
