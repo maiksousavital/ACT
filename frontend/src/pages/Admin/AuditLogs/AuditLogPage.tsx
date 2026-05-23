@@ -50,15 +50,15 @@ export function AuditLogPage() {
         </Form.Select>
       )}
 
-      <Card className="border-0 shadow-sm">
-        <Card.Body>
+      <Card className="border-0 shadow-sm d-flex flex-column" style={{ minHeight: 'calc(100vh - 220px)' }}>
+        <Card.Body className="d-flex flex-column">
           {loading ? (
             <div className="text-center py-4"><Spinner animation="border" variant="primary" size="sm" /></div>
           ) : !data || data.items.length === 0 ? (
             <p className="text-muted text-center py-4 mb-0">No audit logs found.</p>
           ) : (
             <>
-              <div className="table-responsive">
+              <div className="table-responsive flex-grow-1">
                 <Table hover size="sm" className="mb-0 align-middle">
                   <thead className="table-light">
                     <tr>
@@ -82,7 +82,7 @@ export function AuditLogPage() {
                   </tbody>
                 </Table>
               </div>
-              <div className="d-flex justify-content-between align-items-center mt-3">
+              <div className="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                 <small className="text-muted">Page {data.page} of {data.totalPages}</small>
                 <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
               </div>
