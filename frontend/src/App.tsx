@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import { BrandProvider } from './contexts/BrandContext'
 import { ProtectedRoute } from './components/Auth/ProtectedRoute'
+import { OfflineBanner } from './components/Common/OfflineBanner'
+import { InstallPrompt } from './components/Common/InstallPrompt'
 import { AppShell } from './components/Layout/AppShell'
 import { LoginPage } from './pages/Login/LoginPage'
 import { DashboardPage } from './pages/Dashboard/DashboardPage'
@@ -28,6 +30,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <BrandProvider>
+        <OfflineBanner />
         <Toaster position="top-right" />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -62,6 +65,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+        <InstallPrompt />
         </BrandProvider>
       </AuthProvider>
     </BrowserRouter>

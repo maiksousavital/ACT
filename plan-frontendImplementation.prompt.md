@@ -241,15 +241,15 @@ frontend/src/
 ### Phase F8 — PWA Features
 
 #### F8.1 PWA manifest & service worker
-- [ ] Configure `vite-plugin-pwa` with app name, icons, theme colour
-- [ ] Add `manifest.json` (name: "ACT", icons, background_color from brand)
-- [ ] Service worker: cache static assets, offline fallback page
-- [ ] "Install App" prompt on compatible browsers
+- [x] Configure `vite-plugin-pwa` with app name, icons, theme colour
+- [x] Add `manifest.json` (name: "ACT", icons, background_color from brand)
+- [x] Service worker: cache static assets, offline fallback page
+- [x] "Install App" prompt on compatible browsers
 
 #### F8.2 Offline support (basic)
-- [ ] Cache last-fetched data in localStorage for read-only offline viewing
-- [ ] Show "Offline" banner when no connection
-- [ ] Queue mutations (create/update) and sync when back online (optional, v2)
+- [x] Cache last-fetched data in localStorage for read-only offline viewing
+- [x] Show "Offline" banner when no connection
+- [x] Queue mutations (create/update) and sync when back online (optional, v2)
 
 ---
 
