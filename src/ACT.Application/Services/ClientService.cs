@@ -71,6 +71,17 @@ public class ClientService : IClientService
         };
     }
 
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var client = await _clientRepository.GetByIdAsync(id);
+        if (client == null) return false;
+
+        client.IsArchived = true;
+        await _clientRepository.UpdateAsync(client);
+        await _clientRepository.SaveChangesAsync();
+        return true;
+    }
+
     private static ClientDto ToDto(Client client)
     {
         return new ClientDto

@@ -7,6 +7,7 @@ public class Company
     public string? ContactEmail { get; set; }
     public string? Phone { get; set; }
     public string? Address { get; set; }
+    public bool IsActive { get; set; } = true;
     public ICollection<BrandSettings> BrandSettings { get; set; } = new List<BrandSettings>();
     public ICollection<Client> Clients { get; set; } = new List<Client>();
     public ICollection<TreatmentType> TreatmentTypes { get; set; } = new List<TreatmentType>();

@@ -9,5 +9,6 @@ public interface ICompanyService
     Task<CompanyDto> CreateAsync(CreateCompanyRequest request);
     Task<CompanyDto?> UpdateAsync(int id, UpdateCompanyRequest request);
     Task<PagedResult<CompanyDto>> GetPagedAsync(int page, int pageSize);
+    Task<bool> DeleteAsync(int id);
 }
 

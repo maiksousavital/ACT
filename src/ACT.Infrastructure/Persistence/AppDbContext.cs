@@ -92,6 +92,9 @@ public class AppDbContext : DbContext
             e.Property(c => c.ContactEmail).HasMaxLength(150);
             e.Property(c => c.Phone).HasMaxLength(50);
             e.Property(c => c.Address).HasMaxLength(300);
+
+            // Global query filter — deactivated companies are invisible
+            e.HasQueryFilter(c => c.IsActive);
         });
 
         // ── BrandSettings ─────────────────────────────────────────────────────

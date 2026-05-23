@@ -46,4 +46,12 @@ public class CompanyController : ControllerBase
         if (updated == null) return NotFound();
         return Ok(updated);
     }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        var result = await _companyService.DeleteAsync(id);
+        if (!result) return NotFound();
+        return NoContent();
+    }
 }

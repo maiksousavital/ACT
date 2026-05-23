@@ -187,22 +187,21 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [x] Remove `FollowUpPeriodsController.cs` (metadata is already served by `TreatmentTypeController.GetAddEditMetadata`)
 
 ### 8.7 Soft delete for Company
-- [ ] Add `IsActive` (bool, default true) property to `Company` entity
-- [ ] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => c.IsActive)`
-- [ ] Add EF migration
-- [ ] Add `DeactivateAsync(int id)` to `ICompanyService` — sets `IsActive = false`
-- [ ] Add `DELETE /api/company/{id}` endpoint to `CompanyController` — calls `DeactivateAsync` (soft delete)
-- [ ] Update frontend `companyApi.ts` — add `deactivate(id)` method using `DELETE`
-- [ ] Add deactivate button + confirm dialog to `CompanyListPage`
+- [x] Add `IsActive` (bool, default true) property to `Company` entity
+- [x] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => c.IsActive)`
+- [x] Add EF migration
+- [x] Add `DeactivateAsync(int id)` to `ICompanyService` — sets `IsActive = false`
+- [x] Add `DELETE /api/company/{id}` endpoint to `CompanyController` — calls `DeactivateAsync` (soft delete)
+- [x] Update frontend `companyApi.ts` — add `deactivate(id)` method using `DELETE`
+- [x] Add deactivate button + confirm dialog to `CompanyListPage`
 
 ### 8.8 Soft delete for Client
-- [ ] Verify `IsArchived` property already exists on `Client` entity (it does)
-- [ ] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => !c.IsArchived)`
-- [ ] Add `IgnoreQueryFilters()` option for admin views that need to see archived clients
-- [ ] Add `ArchiveAsync(int id)` to `IClientService` — sets `IsArchived = true`
-- [ ] Add `DELETE /api/client/{id}` endpoint to `ClientController` — calls `ArchiveAsync` (soft delete)
-- [ ] Update frontend `clientApi.ts` — add `archive(id)` method using `DELETE`
-- [ ] Add archive button + confirm dialog to `ClientListPage`
+- [x] Verify `IsArchived` property already exists on `Client` entity (it does)
+- [x] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => !c.IsArchived)` (already exists)
+- [x] Add `ArchiveAsync(int id)` to `IClientService` — sets `IsArchived = true`
+- [x] Add `DELETE /api/client/{id}` endpoint to `ClientController` — calls `ArchiveAsync` (soft delete)
+- [x] Update frontend `clientApi.ts` — add `archive(id)` method using `DELETE`
+- [x] Add archive button + confirm dialog to `ClientListPage`
 - [ ] Optionally: add "Show archived" toggle on `ClientListPage` to view archived clients
 
 ### 8.6 Verify `TotalPages` is returned after backend restart

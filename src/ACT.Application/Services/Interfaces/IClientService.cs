@@ -9,4 +9,5 @@ public interface IClientService
     Task<ClientDto> CreateAsync(int companyId, CreateClientRequest request);
     Task<ClientDto?> UpdateAsync(int id, UpdateClientRequest request);
     Task<PagedResult<ClientDto>> GetPagedAsync(int? companyId, int page, int pageSize);
+    Task<bool> DeleteAsync(int id);
 }

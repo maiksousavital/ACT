@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Table, Button, Card, Spinner, Form, InputGroup, Badge } from 'react-bootstrap'
+import { Table, Button, Card, Spinner, Form, InputGroup, Badge, Modal } from 'react-bootstrap'
+import toast from 'react-hot-toast'
 import { clientApi } from '../../api/clientApi'
 import { Pagination } from '../../components/Table/Pagination'
 import type { ClientDto } from '../../types/client'
@@ -12,6 +13,7 @@ export function ClientListPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<ClientDto | null>(null)
   const pageSize = 10
 
   const fetchClients = useCallback(async () => {
@@ -29,6 +31,18 @@ export function ClientListPage() {
   useEffect(() => {
     fetchClients()
   }, [fetchClients])
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await clientApi.delete(deleteTarget.id)
+      toast.success(`"${deleteTarget.firstName} ${deleteTarget.lastName}" has been deleted`)
+      setDeleteTarget(null)
+      await fetchClients()
+    } catch {
+      toast.error('Failed to delete client')
+    }
+  }
 
   const filteredItems = data?.items.filter((c) => {
     const name = `${c.firstName} ${c.lastName}`.toLowerCase()
@@ -101,6 +115,15 @@ export function ClientListPage() {
                           >
                             Edit
                           </Button>
+                          {!client.isArchived && (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => setDeleteTarget(client)}
+                            >
+                              Delete
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -126,6 +149,20 @@ export function ClientListPage() {
           )}
         </Card.Body>
       </Card>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={!!deleteTarget} onHide={() => setDeleteTarget(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Client</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete <strong>{deleteTarget?.firstName} {deleteTarget?.lastName}</strong>? They will be hidden from the active client list.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDelete}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   )
 }

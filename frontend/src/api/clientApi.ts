@@ -24,5 +24,8 @@ export const clientApi = {
     const response = await axiosInstance.put<ClientDto>(`/client/${id}`, data)
     return response.data
   },
+  delete: async (id: number): Promise<void> => {
+    await axiosInstance.delete(`/client/${id}`)
+  },
 }
 

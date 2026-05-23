@@ -151,6 +151,9 @@ namespace ACT.Infrastructure.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -168,6 +171,7 @@ namespace ACT.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            IsActive = true,
                             Name = "Default Company"
                         });
                 });

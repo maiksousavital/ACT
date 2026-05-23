@@ -19,7 +19,7 @@ export const userApi = {
     return response.data
   },
 
-  deactivate: async (id: number): Promise<void> => {
+  delete: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/user/${id}`)
   },
 }

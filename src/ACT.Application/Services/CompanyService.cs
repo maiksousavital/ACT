@@ -68,6 +68,17 @@ public class CompanyService : ICompanyService
         };
     }
 
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var entity = await _companyRepository.GetByIdAsync(id);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        await _companyRepository.UpdateAsync(entity);
+        await _companyRepository.SaveChangesAsync();
+        return true;
+    }
+
     private static CompanyDto ToDto(Company company)
     {
         return new CompanyDto

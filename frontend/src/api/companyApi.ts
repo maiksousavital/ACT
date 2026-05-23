@@ -24,5 +24,9 @@ export const companyApi = {
     const response = await axiosInstance.put<CompanyDto>(`/company/${id}`, data)
     return response.data
   },
+
+  delete: async (id: number): Promise<void> => {
+    await axiosInstance.delete(`/company/${id}`)
+  },
 }
 

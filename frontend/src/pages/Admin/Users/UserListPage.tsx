@@ -17,7 +17,7 @@ export function UserListPage() {
     user?.companyId ?? undefined
   )
   const [loading, setLoading] = useState(true)
-  const [deactivateId, setDeactivateId] = useState<number | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -37,15 +37,15 @@ export function UserListPage() {
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
-  const handleDeactivate = async () => {
-    if (!deactivateId) return
+  const handleDelete = async () => {
+    if (!deleteId) return
     try {
-      await userApi.deactivate(deactivateId)
-      toast.success('User deactivated')
-      setDeactivateId(null)
+      await userApi.delete(deleteId)
+      toast.success('User deleted')
+      setDeleteId(null)
       await fetchUsers()
     } catch {
-      toast.error('Failed to deactivate user')
+      toast.error('Failed to delete user')
     }
   }
 
@@ -104,8 +104,8 @@ export function UserListPage() {
                       </td>
                       <td>
                         {u.isActive && (
-                          <Button variant="outline-danger" size="sm" onClick={() => setDeactivateId(u.id)}>
-                            Deactivate
+                          <Button variant="outline-danger" size="sm" onClick={() => setDeleteId(u.id)}>
+                            Delete
                           </Button>
                         )}
                       </td>
@@ -118,18 +118,17 @@ export function UserListPage() {
         </Card.Body>
       </Card>
 
-      {/* Deactivate Confirmation Modal */}
-      <Modal show={!!deactivateId} onHide={() => setDeactivateId(null)} centered>
+      {/* Delete Confirmation Modal */}
+      <Modal show={!!deleteId} onHide={() => setDeleteId(null)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Confirm Deactivation</Modal.Title>
+          <Modal.Title>Delete User</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Are you sure you want to deactivate this user? They will no longer be able to log in.</Modal.Body>
+        <Modal.Body>Are you sure you want to delete this user? They will no longer be able to log in.</Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setDeactivateId(null)}>Cancel</Button>
-          <Button variant="danger" onClick={handleDeactivate}>Deactivate</Button>
+          <Button variant="outline-secondary" onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDelete}>Delete</Button>
         </Modal.Footer>
       </Modal>
     </div>
   )
 }
-
