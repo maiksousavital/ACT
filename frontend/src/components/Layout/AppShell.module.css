@@ -31,6 +31,21 @@
   background-color: rgba(99, 102, 241, 0.3);
 }
 
+.menuToggle {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.chevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
 @media (max-width: 991.98px) {
   .sidebar {
     position: fixed;
