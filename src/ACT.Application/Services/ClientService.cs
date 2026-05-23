@@ -26,30 +26,37 @@ public class ClientService : IClientService
         return client == null ? null : ToDto(client);
     }
 
-    public async Task<ClientDto> CreateAsync(int companyId, Client client)
+    public async Task<ClientDto> CreateAsync(int companyId, CreateClientRequest request)
     {
-        client.CompanyId = companyId;
+        var client = new Client
+        {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            Phone = request.Phone,
+            Notes = request.Notes,
+            CompanyId = companyId
+        };
         await _clientRepository.AddAsync(client);
         await _clientRepository.SaveChangesAsync();
         return ToDto(client);
     }
 
-    public async Task UpdateAsync(int id, Client updatedClient)
+    public async Task<ClientDto?> UpdateAsync(int id, UpdateClientRequest request)
     {
         var existingClient = await _clientRepository.GetByIdAsync(id);
         if (existingClient == null)
-            throw new Exception("Client not found");
+            return null;
 
-        existingClient.FirstName = updatedClient.FirstName;
-        existingClient.LastName = updatedClient.LastName;
-        existingClient.Phone = updatedClient.Phone;
-        existingClient.Email = updatedClient.Email;
-        existingClient.Notes = updatedClient.Notes;
-        existingClient.IsArchived = updatedClient.IsArchived;
-        // Do not update CreatedAt or Id
+        existingClient.FirstName = request.FirstName;
+        existingClient.LastName = request.LastName;
+        existingClient.Phone = request.Phone;
+        existingClient.Email = request.Email;
+        existingClient.Notes = request.Notes;
 
         await _clientRepository.UpdateAsync(existingClient);
         await _clientRepository.SaveChangesAsync();
+        return ToDto(existingClient);
     }
 
     public async Task<PagedResult<ClientDto>> GetPagedAsync(int? companyId, int page, int pageSize)

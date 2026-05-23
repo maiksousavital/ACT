@@ -177,11 +177,11 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [ ] Or: if full update is desired, expand the frontend form to send all fields — choose simpler option
 
 ### 8.4 Add proper DTOs for Client create/update
-- [ ] Create `CreateClientRequest` DTO (FirstName, LastName, Email?, Phone?, Notes?)
-- [ ] Create `UpdateClientRequest` DTO (same fields)
-- [ ] Update `ClientController.Create` to accept `CreateClientRequest` instead of raw `Client` entity
-- [ ] Update `ClientController.Update` to accept `UpdateClientRequest` instead of raw `Client` entity
-- [ ] Update `ClientService` to map DTOs to entity
+- [x] Create `CreateClientRequest` DTO (FirstName, LastName, Email?, Phone?, Notes?)
+- [x] Create `UpdateClientRequest` DTO (same fields)
+- [x] Update `ClientController.Create` to accept `CreateClientRequest` instead of raw `Client` entity
+- [x] Update `ClientController.Update` to accept `UpdateClientRequest` instead of raw `Client` entity
+- [x] Update `ClientService` to map DTOs to entity
 
 ### 8.5 Clean up unused `FollowUpPeriodsController`
 - [ ] Remove `FollowUpPeriodsController.cs` (metadata is already served by `TreatmentTypeController.GetAddEditMetadata`)

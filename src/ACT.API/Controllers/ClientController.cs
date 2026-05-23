@@ -1,6 +1,5 @@
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
-using ACT.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -29,28 +28,20 @@ public class ClientController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> Create(Client client)
+    public async Task<ActionResult<ClientDto>> Create([FromBody] CreateClientRequest request)
     {
         if (CompanyId == null)
             return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
-        var createdClient = await _clientService.CreateAsync(CompanyId.Value, client);
-        return CreatedAtAction(nameof(GetPaged), new { id = createdClient.Id }, createdClient);
+        var created = await _clientService.CreateAsync(CompanyId.Value, request);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(int id, [FromBody] Client updatedClient)
+    public async Task<ActionResult<ClientDto>> Update(int id, [FromBody] UpdateClientRequest request)
     {
-        try
-        {
-            await _clientService.UpdateAsync(id, updatedClient);
-            // Fetch the updated client to return
-            var client = await _clientService.GetByIdAsync(id);
-            return Ok(client);
-        }
-        catch (Exception)
-        {
-            return NotFound();
-        }
+        var updated = await _clientService.UpdateAsync(id, request);
+        if (updated == null) return NotFound();
+        return Ok(updated);
     }
 
     // GET /api/client/paged?page=1&pageSize=20
