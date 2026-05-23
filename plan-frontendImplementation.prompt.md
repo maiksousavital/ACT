@@ -144,25 +144,25 @@ frontend/src/
 ### Phase F3 — Clients Module
 
 #### F3.1 Client types & API
-- [ ] Create `types/client.ts` — `ClientDto`, `CreateClientRequest`, `PagedResult<ClientDto>`
-- [ ] Create `api/clientApi.ts` — `getClientsPaged()`, `getClientById()`, `createClient()`, `updateClient()`
+- [x] Create `types/client.ts` — `ClientDto`, `CreateClientRequest`, `PagedResult<ClientDto>`
+- [x] Create `api/clientApi.ts` — `getClientsPaged()`, `getClientById()`, `createClient()`, `updateClient()`
 
 #### F3.2 Client list page
-- [ ] Create `pages/Clients/ClientListPage.tsx`
-- [ ] Paginated table with columns: Name, Phone, Email, Status, Actions
-- [ ] Search/filter by name (client-side or query param)
-- [ ] "Add Client" button → opens form
+- [x] Create `pages/Clients/ClientListPage.tsx`
+- [x] Paginated table with columns: Name, Phone, Email, Status, Actions
+- [x] Search/filter by name (client-side or query param)
+- [x] "Add Client" button → opens form
 
 #### F3.3 Client form (create/edit)
-- [ ] Create `pages/Clients/ClientFormPage.tsx` (or modal)
-- [ ] Fields: FirstName, LastName, Phone, Email, Notes
-- [ ] Validation with Zod
-- [ ] On submit: POST (create) or PUT (edit), then redirect to list
+- [x] Create `pages/Clients/ClientFormPage.tsx` (or modal)
+- [x] Fields: FirstName, LastName, Phone, Email, Notes
+- [x] Validation with Zod
+- [x] On submit: POST (create) or PUT (edit), then redirect to list
 
 #### F3.4 Client detail page
-- [ ] Create `pages/Clients/ClientDetailPage.tsx`
-- [ ] Show client info + list of their treatments
-- [ ] "Edit" button, "Add Treatment" button
+- [x] Create `pages/Clients/ClientDetailPage.tsx`
+- [x] Show client info + list of their treatments
+- [x] "Edit" button, "Add Treatment" button
 
 ---
 
