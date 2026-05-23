@@ -4,7 +4,7 @@ namespace ACT.Application.Services.Interfaces;
 
 public interface IClientService
 {
-    Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeArchived = false);
+    Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeDeleted = false);
     Task<ClientDto?> GetByIdAsync(int id);
     Task<ClientDto> CreateAsync(int companyId, CreateClientRequest request);
     Task<ClientDto?> UpdateAsync(int id, UpdateClientRequest request);

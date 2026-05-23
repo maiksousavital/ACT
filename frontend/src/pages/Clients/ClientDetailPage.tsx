@@ -77,8 +77,8 @@ export function ClientDetailPage() {
             </div>
             <div className="col-12 col-sm-6">
               <small className="text-muted d-block">Status</small>
-              <Badge bg={client.isArchived ? 'secondary' : 'success'}>
-                {client.isArchived ? 'Archived' : 'Active'}
+              <Badge bg={client.isDeleted ? 'secondary' : 'success'}>
+                {client.isDeleted ? 'Deleted' : 'Active'}
               </Badge>
             </div>
             <div className="col-12 col-sm-6">

@@ -14,13 +14,13 @@ public class ClientRepository : IClientRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Client>> GetAllAsync(int? companyId, bool includeArchived = false)
+    public async Task<IEnumerable<Client>> GetAllAsync(int? companyId, bool includeDeleted = false)
     {
         var query = _context.Clients.AsQueryable();
         if (companyId.HasValue)
             query = query.Where(c => c.CompanyId == companyId.Value);
-        if (!includeArchived)
-            query = query.Where(c => !c.IsArchived);
+        if (!includeDeleted)
+            query = query.Where(c => !c.IsDeleted);
         return await query.ToListAsync();
     }
 

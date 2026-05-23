@@ -14,9 +14,9 @@ public class ClientService : IClientService
         _clientRepository = clientRepository;
     }
 
-    public async Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeArchived = false)
+    public async Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeDeleted = false)
     {
-        var clients = await _clientRepository.GetAllAsync(companyId, includeArchived);
+        var clients = await _clientRepository.GetAllAsync(companyId, includeDeleted);
         return clients.Select(ToDto);
     }
 
@@ -76,7 +76,7 @@ public class ClientService : IClientService
         var client = await _clientRepository.GetByIdAsync(id);
         if (client == null) return false;
 
-        client.IsArchived = true;
+        client.IsDeleted = true;
         await _clientRepository.UpdateAsync(client);
         await _clientRepository.SaveChangesAsync();
         return true;
@@ -92,7 +92,7 @@ public class ClientService : IClientService
             Phone = client.Phone,
             Email = client.Email,
             Notes = client.Notes,
-            IsArchived = client.IsArchived,
+            IsDeleted = client.IsDeleted,
             CreatedAt = client.CreatedAt
         };
     }

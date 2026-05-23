@@ -30,9 +30,9 @@ public class AppDbContext : DbContext
             e.Property(c => c.Email).HasMaxLength(150);
             e.Property(c => c.Notes).HasMaxLength(1000);
 
-            // Global query filter — archived clients are invisible
+            // Global query filter — deleted clients are invisible
             // unless explicitly queried with .IgnoreQueryFilters()
-            e.HasQueryFilter(c => !c.IsArchived);
+            e.HasQueryFilter(c => !c.IsDeleted);
 
             e.HasMany(c => c.Treatments)
              .WithOne(t => t.Client)
@@ -93,8 +93,8 @@ public class AppDbContext : DbContext
             e.Property(c => c.Phone).HasMaxLength(50);
             e.Property(c => c.Address).HasMaxLength(300);
 
-            // Global query filter — deactivated companies are invisible
-            e.HasQueryFilter(c => c.IsActive);
+            // Global query filter — deleted companies are invisible
+            e.HasQueryFilter(c => !c.IsDeleted);
         });
 
         // ── BrandSettings ─────────────────────────────────────────────────────

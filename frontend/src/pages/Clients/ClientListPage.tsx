@@ -102,8 +102,8 @@ export function ClientListPage() {
                         <td className="d-none d-md-table-cell">{client.phone || '—'}</td>
                         <td className="d-none d-md-table-cell">{client.email || '—'}</td>
                         <td>
-                          <Badge bg={client.isArchived ? 'secondary' : 'success'}>
-                            {client.isArchived ? 'Archived' : 'Active'}
+                          <Badge bg={client.isDeleted ? 'secondary' : 'success'}>
+                            {client.isDeleted ? 'Deleted' : 'Active'}
                           </Badge>
                         </td>
                         <td>
@@ -115,7 +115,7 @@ export function ClientListPage() {
                           >
                             Edit
                           </Button>
-                          {!client.isArchived && (
+                          {!client.isDeleted && (
                             <Button
                               variant="outline-danger"
                               size="sm"

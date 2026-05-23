@@ -73,7 +73,7 @@ public class CompanyService : ICompanyService
         var entity = await _companyRepository.GetByIdAsync(id);
         if (entity == null) return false;
 
-        entity.IsActive = false;
+        entity.IsDeleted = true;
         await _companyRepository.UpdateAsync(entity);
         await _companyRepository.SaveChangesAsync();
         return true;

@@ -5,7 +5,7 @@ export interface ClientDto {
   email?: string
   phone?: string
   notes?: string
-  isArchived: boolean
+  isDeleted: boolean
   createdAt: string
   companyId?: number
 }

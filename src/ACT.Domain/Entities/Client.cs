@@ -9,7 +9,7 @@ public class Client
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? Notes { get; set; }
-    public bool IsArchived { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
     public int CompanyId { get; set; }
