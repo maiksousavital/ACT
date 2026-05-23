@@ -103,6 +103,9 @@ export function UserListPage() {
                         </Badge>
                       </td>
                       <td>
+                        <Button variant="outline-primary" size="sm" className="me-1" onClick={() => navigate(`/admin/users/${u.id}/edit`)}>
+                          Edit
+                        </Button>
                         {u.isActive && (
                           <Button variant="outline-danger" size="sm" onClick={() => setDeleteId(u.id)}>
                             Delete

@@ -63,6 +63,7 @@ export default function App() {
             <Route path="/admin/companies/:id/edit" element={<RoleGuard requiredRole="SuperAdmin"><CompanyFormPage /></RoleGuard>} />
             <Route path="/admin/users" element={<RoleGuard requiredRole="Admin"><UserListPage /></RoleGuard>} />
             <Route path="/admin/users/new" element={<RoleGuard requiredRole="Admin"><UserFormPage /></RoleGuard>} />
+            <Route path="/admin/users/:id/edit" element={<RoleGuard requiredRole="Admin"><UserFormPage /></RoleGuard>} />
             <Route path="/admin/audit-logs" element={<RoleGuard requiredRole="Admin"><AuditLogPage /></RoleGuard>} />
             <Route path="/admin/login-history" element={<RoleGuard requiredRole="Admin"><LoginHistoryPage /></RoleGuard>} />
             <Route path="*" element={<NotFoundPage />} />

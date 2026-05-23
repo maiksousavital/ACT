@@ -19,6 +19,11 @@ export const userApi = {
     return response.data
   },
 
+  update: async (id: number, data: { email?: string; companyId?: number; role?: string; isActive?: boolean }): Promise<UserDto> => {
+    const response = await axiosInstance.put<UserDto>(`/user/${id}`, data)
+    return response.data
+  },
+
   delete: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/user/${id}`)
   },

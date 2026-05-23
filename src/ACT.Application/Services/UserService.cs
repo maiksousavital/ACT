@@ -59,6 +59,10 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return null;
 
+        if (!string.IsNullOrWhiteSpace(request.Email))
+            user.Email = request.Email;
+        if (request.CompanyId.HasValue)
+            user.CompanyId = request.CompanyId.Value;
         if (request.Role.HasValue)
             user.Role = request.Role.Value;
         if (request.IsActive.HasValue)
