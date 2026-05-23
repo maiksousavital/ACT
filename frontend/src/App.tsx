@@ -1,12 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import { BrandProvider } from './contexts/BrandContext'
 import { ProtectedRoute } from './components/Auth/ProtectedRoute'
+import { ErrorBoundary } from './components/Common/ErrorBoundary'
 import { OfflineBanner } from './components/Common/OfflineBanner'
 import { InstallPrompt } from './components/Common/InstallPrompt'
 import { AppShell } from './components/Layout/AppShell'
 import { LoginPage } from './pages/Login/LoginPage'
+import { NotFoundPage } from './pages/NotFound/NotFoundPage'
 import { DashboardPage } from './pages/Dashboard/DashboardPage'
 import { ClientListPage } from './pages/Clients/ClientListPage'
 import { ClientFormPage } from './pages/Clients/ClientFormPage'
@@ -27,6 +29,7 @@ import { RoleGuard } from './components/Auth/RoleGuard'
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <BrandProvider>
@@ -62,13 +65,16 @@ export default function App() {
             <Route path="/admin/users/new" element={<RoleGuard requiredRole="Admin"><UserFormPage /></RoleGuard>} />
             <Route path="/admin/audit-logs" element={<RoleGuard requiredRole="Admin"><AuditLogPage /></RoleGuard>} />
             <Route path="/admin/login-history" element={<RoleGuard requiredRole="Admin"><LoginHistoryPage /></RoleGuard>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <InstallPrompt />
         </BrandProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

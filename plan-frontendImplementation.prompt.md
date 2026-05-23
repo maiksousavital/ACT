@@ -255,14 +255,14 @@ frontend/src/
 
 ### Phase F9 — Polish & Testing
 
-- [ ] Loading states (skeleton/spinner on all data-fetching pages)
-- [ ] Error boundaries (global error page)
-- [ ] 404 page
-- [ ] Responsive design audit (mobile, tablet, desktop)
-- [ ] Accessibility basics (labels, keyboard nav, focus management)
-- [ ] Form validation error messages (consistent UX)
-- [ ] Confirm dialogs before destructive actions (delete, deactivate)
-- [ ] Toast notifications on success/error (react-hot-toast)
+- [x] Loading states (skeleton/spinner on all data-fetching pages)
+- [x] Error boundaries (global error page)
+- [x] 404 page
+- [x] Responsive design audit (mobile, tablet, desktop)
+- [x] Accessibility basics (labels, keyboard nav, focus management)
+- [x] Form validation error messages (consistent UX)
+- [x] Confirm dialogs before destructive actions (delete, deactivate)
+- [x] Toast notifications on success/error (react-hot-toast)
 
 ---
 

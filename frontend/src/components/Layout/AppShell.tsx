@@ -9,6 +9,13 @@ export function AppShell() {
 
   return (
     <div className="d-flex">
+      <a
+        href="#main-content"
+        className="visually-hidden-focusable position-absolute top-0 start-0 p-2 bg-primary text-white z-3"
+      >
+        Skip to main content
+      </a>
+
       {sidebarOpen && (
         <div
           className={`d-lg-none ${styles.overlay}`}
@@ -20,7 +27,7 @@ export function AppShell() {
 
       <div className={`d-flex flex-column ${styles.content}`}>
         <TopBar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="p-3 p-md-4">
+        <main id="main-content" className="p-3 p-md-4">
           <Outlet />
         </main>
       </div>

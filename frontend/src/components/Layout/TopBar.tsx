@@ -15,6 +15,7 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
         size="sm"
         className="d-lg-none"
         onClick={onToggleSidebar}
+        aria-label="Toggle navigation menu"
       >
         ☰
       </Button>

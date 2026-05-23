@@ -15,6 +15,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <nav
+      aria-label="Main navigation"
       className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''} d-lg-block bg-dark text-white p-3`}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -22,6 +23,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <button
           className="btn btn-sm btn-outline-light d-lg-none"
           onClick={onClose}
+          aria-label="Close navigation menu"
         >
           ✕
         </button>
