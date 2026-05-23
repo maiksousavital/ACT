@@ -222,19 +222,19 @@ frontend/src/
 ### Phase F7 — Admin Portal (SuperAdmin)
 
 #### F7.1 Company management
-- [ ] Create `pages/Admin/Companies/CompanyListPage.tsx` — paginated table
-- [ ] Create `pages/Admin/Companies/CompanyFormPage.tsx` — create/edit company
-- [ ] After creating company: prompt to create first Admin user
+- [x] Create `pages/Admin/Companies/CompanyListPage.tsx` — paginated table
+- [x] Create `pages/Admin/Companies/CompanyFormPage.tsx` — create/edit company
+- [x] After creating company: prompt to create first Admin user
 
 #### F7.2 User management
-- [ ] Create `pages/Admin/Users/UserListPage.tsx` — filter by company
-- [ ] Create `pages/Admin/Users/UserFormPage.tsx` — create user (email, password, role, company)
-- [ ] Deactivate user button with confirmation
+- [x] Create `pages/Admin/Users/UserListPage.tsx` — filter by company
+- [x] Create `pages/Admin/Users/UserFormPage.tsx` — create user (email, password, role, company)
+- [x] Deactivate user button with confirmation
 
 #### F7.3 Audit logs
-- [ ] Create `pages/Admin/AuditLogs/AuditLogPage.tsx` — paginated table of audit logs
-- [ ] Create `pages/Admin/AuditLogs/LoginHistoryPage.tsx` — paginated login history
-- [ ] Filter by company (dropdown for SuperAdmin)
+- [x] Create `pages/Admin/AuditLogs/AuditLogPage.tsx` — paginated table of audit logs
+- [x] Create `pages/Admin/AuditLogs/LoginHistoryPage.tsx` — paginated login history
+- [x] Filter by company (dropdown for SuperAdmin)
 
 ---
 

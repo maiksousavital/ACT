@@ -15,6 +15,13 @@ import { TreatmentListPage } from './pages/Treatments/TreatmentListPage'
 import { TreatmentFormPage } from './pages/Treatments/TreatmentFormPage'
 import { FollowUpsPage } from './pages/FollowUps/FollowUpsPage'
 import { BrandSettingsPage } from './pages/Settings/BrandSettingsPage'
+import { CompanyListPage } from './pages/Admin/Companies/CompanyListPage'
+import { CompanyFormPage } from './pages/Admin/Companies/CompanyFormPage'
+import { UserListPage } from './pages/Admin/Users/UserListPage'
+import { UserFormPage } from './pages/Admin/Users/UserFormPage'
+import { AuditLogPage } from './pages/Admin/AuditLogs/AuditLogPage'
+import { LoginHistoryPage } from './pages/Admin/AuditLogs/LoginHistoryPage'
+import { RoleGuard } from './components/Auth/RoleGuard'
 
 export default function App() {
   return (
@@ -45,7 +52,13 @@ export default function App() {
             <Route path="/treatments/:id/edit" element={<TreatmentFormPage />} />
             <Route path="/follow-ups" element={<FollowUpsPage />} />
             <Route path="/settings/branding" element={<BrandSettingsPage />} />
-            {/* Phase F7 routes will be added here */}
+            <Route path="/admin/companies" element={<RoleGuard requiredRole="SuperAdmin"><CompanyListPage /></RoleGuard>} />
+            <Route path="/admin/companies/new" element={<RoleGuard requiredRole="SuperAdmin"><CompanyFormPage /></RoleGuard>} />
+            <Route path="/admin/companies/:id/edit" element={<RoleGuard requiredRole="SuperAdmin"><CompanyFormPage /></RoleGuard>} />
+            <Route path="/admin/users" element={<RoleGuard requiredRole="Admin"><UserListPage /></RoleGuard>} />
+            <Route path="/admin/users/new" element={<RoleGuard requiredRole="Admin"><UserFormPage /></RoleGuard>} />
+            <Route path="/admin/audit-logs" element={<RoleGuard requiredRole="Admin"><AuditLogPage /></RoleGuard>} />
+            <Route path="/admin/login-history" element={<RoleGuard requiredRole="Admin"><LoginHistoryPage /></RoleGuard>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
