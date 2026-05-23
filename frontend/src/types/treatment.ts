@@ -1,10 +1,10 @@
 export interface TreatmentDto {
   id: number
   clientId: number
-  clientFirstName?: string
-  clientLastName?: string
+  clientName?: string
   treatmentTypeId: number
   treatmentTypeName?: string
+  phone?: string
   treatmentDate: string
   nextFollowUpDate: string
   notes?: string
@@ -12,5 +12,21 @@ export interface TreatmentDto {
   followUpNotes?: string
   isFollowedUp: boolean
   isDue: boolean
+}
+
+export interface CreateTreatmentRequest {
+  clientId: number
+  treatmentTypeId: number
+  treatmentDate: string
+  notes?: string
+}
+
+export interface UpdateTreatmentRequest {
+  treatmentDate: string
+  notes?: string
+}
+
+export interface CompleteFollowUpRequest {
+  followUpNotes?: string
 }
 

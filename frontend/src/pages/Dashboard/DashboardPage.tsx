@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Row, Col, Button, Table, Spinner, Badge } from 'react-bootstrap'
 import { clientApi } from '../../api/clientApi'
-import { followUpApi } from '../../api/followUpApi'
+import { followUpApi } from '../../api/treatmentApi'
 import type { TreatmentDto } from '../../types/treatment'
 import styles from './DashboardPage.module.css'
 
@@ -100,7 +100,7 @@ export function DashboardPage() {
                 <tbody>
                   {todayFollowUps.slice(0, 5).map((fu) => (
                     <tr key={fu.id}>
-                      <td>{fu.clientFirstName} {fu.clientLastName}</td>
+                      <td>{fu.clientName}</td>
                       <td className="d-none d-md-table-cell">{fu.treatmentTypeName}</td>
                       <td>{new Date(fu.nextFollowUpDate).toLocaleDateString()}</td>
                     </tr>
@@ -132,7 +132,7 @@ export function DashboardPage() {
                 <tbody>
                   {overdueFollowUps.slice(0, 10).map((fu) => (
                     <tr key={fu.id}>
-                      <td>{fu.clientFirstName} {fu.clientLastName}</td>
+                      <td>{fu.clientName}</td>
                       <td className="d-none d-md-table-cell">{fu.treatmentTypeName}</td>
                       <td className="text-danger">{new Date(fu.nextFollowUpDate).toLocaleDateString()}</td>
                     </tr>

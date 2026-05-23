@@ -185,21 +185,21 @@ frontend/src/
 ### Phase F5 — Treatments & Follow-Ups Module
 
 #### F5.1 Treatment types & API
-- [ ] Create `types/treatment.ts`
-- [ ] Create `api/treatmentApi.ts`
+- [x] Create `types/treatment.ts`
+- [x] Create `api/treatmentApi.ts`
 
 #### F5.2 Treatment list page
-- [ ] Paginated table: Client Name, Treatment Type, Date, Next Follow-Up, Status, Actions
-- [ ] Filter by client (dropdown or search)
+- [x] Paginated table: Client Name, Treatment Type, Date, Next Follow-Up, Status, Actions
+- [x] Filter by client (dropdown or search)
 
 #### F5.3 Treatment form (create/edit)
-- [ ] Fields: Client (searchable dropdown), TreatmentType (dropdown), Date, Notes
-- [ ] NextFollowUpDate auto-calculated from TreatmentType interval
+- [x] Fields: Client (searchable dropdown), TreatmentType (dropdown), Date, Notes
+- [x] NextFollowUpDate auto-calculated from TreatmentType interval
 
 #### F5.4 Follow-ups page
-- [ ] Two tabs/sections: "Due Today" and "All Overdue"
-- [ ] Each row: Client name, phone, treatment type, due date, "Complete" button
-- [ ] "Complete" button → modal with follow-up notes → calls `POST /api/followups/{id}/complete`
+- [x] Two tabs/sections: "Due Today" and "All Overdue"
+- [x] Each row: Client name, phone, treatment type, due date, "Complete" button
+- [x] "Complete" button → modal with follow-up notes → calls `POST /api/followups/{id}/complete`
 
 ---
 
