@@ -78,6 +78,8 @@ export function TreatmentFormPage() {
     try {
       if (isEdit) {
         await treatmentApi.update(Number(id), {
+          clientId: Number(data.clientId),
+          treatmentTypeId: Number(data.treatmentTypeId),
           treatmentDate: data.treatmentDate,
           notes: data.notes,
         })

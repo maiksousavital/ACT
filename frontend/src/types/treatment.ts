@@ -22,6 +22,8 @@ export interface CreateTreatmentRequest {
 }
 
 export interface UpdateTreatmentRequest {
+  clientId: number
+  treatmentTypeId: number
   treatmentDate: string
   notes?: string
 }

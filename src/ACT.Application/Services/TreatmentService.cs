@@ -122,18 +122,29 @@ public class TreatmentService : ITreatmentService
         if (treatment == null)
             return null;
 
+        // If treatment type changed, reload it for interval calculation
+        TreatmentType type = treatment.TreatmentType;
+        if (request.TreatmentTypeId != treatment.TreatmentTypeId)
+        {
+            type = await _types.GetByIdAsync(request.TreatmentTypeId)
+                ?? throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
+        }
+
         // Update properties
         treatment.ClientId = request.ClientId;
         treatment.TreatmentTypeId = request.TreatmentTypeId;
         treatment.TreatmentDate = request.TreatmentDate;
         treatment.Notes = request.Notes;
-        treatment.NextFollowUpDate = request.NextFollowUpDate;
-        treatment.FollowedUpAt = request.FollowedUpAt;
-        treatment.FollowUpNotes = request.FollowUpNotes;
+        // Recalculate follow-up date based on treatment date + type interval
+        treatment.NextFollowUpDate = request.TreatmentDate.AddDays(type.FollowUpIntervalDays);
 
         await _treatments.UpdateAsync(treatment);
         await _treatments.SaveChangesAsync();
-        return ToDto(treatment);
+
+        // Reload with navigation properties
+        var saved = await _treatments.GetByIdAsync(treatment.Id)
+            ?? throw new Exception("Failed to reload treatment");
+        return ToDto(saved);
     }
 
     // ── Mapping ───────────────────────────────────────────────────────────────
