@@ -52,7 +52,7 @@ export function LoginPage() {
         <Card.Body className="p-4 p-md-5">
           <div className="text-center mb-4">
             <h2 className="fw-bold" style={{ color: 'var(--bs-primary)' }}>ACT</h2>
-            <p className="text-muted">Automated Client Treatments</p>
+            <p className="text-muted">Aesthetic Client Tracker</p>
           </div>
 
           {error && <Alert variant="danger" className="py-2">{error}</Alert>}
