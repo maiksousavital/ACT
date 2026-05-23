@@ -71,13 +71,15 @@ export function BrandSettingsPage() {
 
   useEffect(() => {
     async function fetch() {
-      if (!selectedCompanyId) {
+      // SuperAdmin must select a company first; Admin can load immediately
+      if (isSuperAdmin && !selectedCompanyId) {
         setLoading(false)
         return
       }
       setLoading(true)
       try {
-        const settings = await brandApi.get(selectedCompanyId)
+        const companyParam = isSuperAdmin ? selectedCompanyId : undefined
+        const settings = await brandApi.get(companyParam)
         if (settings) {
           setExisting(settings)
           setForm({
@@ -101,7 +103,7 @@ export function BrandSettingsPage() {
       }
     }
     fetch()
-  }, [selectedCompanyId])
+  }, [selectedCompanyId, isSuperAdmin])
 
   const handleChange = (field: keyof FormState, value: string) => {
     if (field === 'theme') {
@@ -136,8 +138,9 @@ export function BrandSettingsPage() {
   }, [form])
 
   const handleSave = async () => {
-    const companyToSave = selectedCompanyId || user?.companyId
-    if (!companyToSave) {
+    // SuperAdmin must select a company; Admin users don't need to — backend uses JWT
+    const companyParam = isSuperAdmin ? selectedCompanyId : undefined
+    if (isSuperAdmin && !companyParam) {
       setError('Please select a company first.')
       return
     }
@@ -155,12 +158,12 @@ export function BrandSettingsPage() {
       }
 
       if (existing) {
-        await brandApi.update(payload, selectedCompanyId)
+        await brandApi.update(payload, companyParam)
       } else {
-        await brandApi.create(payload, selectedCompanyId)
+        await brandApi.create(payload, companyParam)
       }
       // Reload saved settings to confirm persistence
-      const saved = await brandApi.get(selectedCompanyId)
+      const saved = await brandApi.get(companyParam)
       if (saved) setExisting(saved)
       await refresh()
       toast.success('Brand settings saved')

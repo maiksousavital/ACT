@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Collapse } from 'react-bootstrap'
 import { useAuth } from '../../contexts/AuthContext'
+import { useBrand } from '../../contexts/BrandContext'
 import styles from './AppShell.module.css'
 
 interface SidebarProps {
@@ -11,22 +12,61 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isSuperAdmin, isAdmin } = useAuth()
+  const { brand } = useBrand()
   const location = useLocation()
+  const navRef = useRef<HTMLElement>(null)
 
   const [settingsOpen, setSettingsOpen] = useState(location.pathname.startsWith('/settings'))
   const [adminOpen, setAdminOpen] = useState(location.pathname.startsWith('/admin'))
+
+  // Reactively read CSS variables for sidebar colors (updated by applyBrandToRoot during live preview)
+  const [sidebarBg, setSidebarBg] = useState(brand?.sidebarColor || '#1E293B')
+  const [sidebarText, setSidebarText] = useState('#fff')
+
+  useEffect(() => {
+    const root = document.documentElement
+    const bg = getComputedStyle(root).getPropertyValue('--act-sidebar-bg').trim() || brand?.sidebarColor || '#1E293B'
+    const text = getComputedStyle(root).getPropertyValue('--act-sidebar-text').trim() || '#fff'
+    setSidebarBg(bg)
+    setSidebarText(text)
+  }, [brand])
+
+  // Also listen to CSS variable changes during live preview via MutationObserver
+  useEffect(() => {
+    const readVars = () => {
+      const root = document.documentElement
+      const bg = getComputedStyle(root).getPropertyValue('--act-sidebar-bg').trim()
+      const text = getComputedStyle(root).getPropertyValue('--act-sidebar-text').trim()
+      if (bg) setSidebarBg(bg)
+      if (text) setSidebarText(text)
+    }
+
+    const observer = new MutationObserver(readVars)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
+    const styleEl = document.getElementById('act-brand-styles')
+    if (styleEl) observer.observe(styleEl, { childList: true, characterData: true, subtree: true })
+
+    // Polling fallback for live preview (style element may be created after mount)
+    const interval = setInterval(readVars, 300)
+
+    return () => {
+      observer.disconnect()
+      clearInterval(interval)
+    }
+  }, [])
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
 
   return (
     <nav
+      ref={navRef}
       aria-label="Main navigation"
       className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''} d-lg-block p-3`}
-      style={{ backgroundColor: 'var(--act-sidebar-bg, #1E293B)', color: 'var(--act-sidebar-text, #fff)' }}
+      style={{ backgroundColor: sidebarBg, color: sidebarText }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="mb-0 fw-bold" style={{ color: 'var(--act-sidebar-text, #fff)' }}>ACT</h5>
+        <h5 className="mb-0 fw-bold" style={{ color: sidebarText }}>ACT</h5>
         <button
           className="btn btn-sm btn-outline-light d-lg-none"
           onClick={onClose}
@@ -87,4 +127,3 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     </nav>
   )
 }
-

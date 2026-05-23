@@ -71,6 +71,9 @@ namespace ACT.Infrastructure.Migrations
                     b.Property<string>("AccentColor")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("BackgroundColor")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CompanyId")
                         .HasColumnType("INTEGER");
 
@@ -81,6 +84,9 @@ namespace ACT.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SidebarColor")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Theme")
