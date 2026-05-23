@@ -369,11 +369,43 @@ Defined in `frontend/src/styles/theme.css` (imported in `main.tsx` after Bootstr
 | **F7** | Admin Portal (companies, users, audit) | F1, Backend Phases 2,5,6 |
 | **F8** | PWA features | F1-F7 done |
 | **F9** | Polish & testing | All phases |
+| **F10** | Backend ↔ Frontend alignment | Backend Phase 8 |
+
+---
+
+### Phase F10 — Backend ↔ Frontend Alignment
+
+> Fixes mismatches between frontend API calls and actual backend endpoints/DTOs.
+
+#### F10.1 Fix User deactivate HTTP method
+- [ ] Update `userApi.ts`: change `axiosInstance.put(\`/user/${id}/deactivate\`)` to `axiosInstance.delete(\`/user/${id}\`)`
+- [ ] Verify UserListPage deactivation still works
+
+#### F10.2 Fix `ClientDetailPage` treatments fetch
+- [ ] Currently calls `GET /api/treatment/by-client/{id}` — endpoint doesn't exist yet
+- [ ] After backend adds endpoint (Phase 8.1), verify this works
+- [ ] Alternatively: use `treatmentApi.getPaged` with a `clientId` filter param if backend adds that instead
+
+#### F10.3 Align `UpdateTreatmentRequest` with backend
+- [ ] After backend simplifies DTO (Phase 8.3), verify frontend `treatmentApi.update` sends matching fields
+- [ ] If backend keeps full DTO: update `TreatmentFormPage` to send all required fields (`clientId`, `treatmentTypeId`, `nextFollowUpDate`, etc.)
+
+#### F10.4 Verify `CreateClientRequest` / `UpdateClientRequest` alignment
+- [ ] After backend adds proper DTOs (Phase 8.4), verify frontend request shape matches
+- [ ] Test create and edit client flows end-to-end
+
+#### F10.5 Verify pagination `totalPages` works
+- [ ] After backend restart, confirm `data.totalPages` is populated in all list page API responses
+- [ ] Verify pagination shows/hides correctly (especially with < pageSize records)
+
+#### F10.6 Remove unused frontend code
+- [ ] Remove any references to `followUpPeriodsApi` if they exist (backend removing that controller)
+- [ ] Audit `types/` for unused interfaces
 
 ---
 
 **Instructions:**
-- Execute phases F1 → F9 in order.
+- Execute phases F1 → F10 in order.
 - Each phase produces a working, testable increment.
 - Mark items `[x]` as completed.
 

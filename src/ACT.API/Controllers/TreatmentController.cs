@@ -79,4 +79,12 @@ public class TreatmentsController : ControllerBase
         if (treatment == null) return NotFound();
         return Ok(treatment);
     }
+
+    // GET /api/treatment/by-client/{clientId}
+    [HttpGet("by-client/{clientId}")]
+    public async Task<IActionResult> GetByClient(int clientId)
+    {
+        var treatments = await _service.GetByClientAsync(clientId);
+        return Ok(treatments);
+    }
 }

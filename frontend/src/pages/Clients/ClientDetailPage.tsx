@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, Button, Spinner, Table, Badge } from 'react-bootstrap'
 import { clientApi } from '../../api/clientApi'
+import { treatmentApi } from '../../api/treatmentApi'
 import type { ClientDto } from '../../types/client'
 import type { TreatmentDto } from '../../types/treatment'
-import axiosInstance from '../../api/axiosInstance'
 
 export function ClientDetailPage() {
   const { id } = useParams()
@@ -14,20 +14,24 @@ export function ClientDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchData() {
       try {
         const c = await clientApi.getById(Number(id))
         setClient(c)
-        // fetch treatments for this client
-        const res = await axiosInstance.get<TreatmentDto[]>(`/treatment/by-client/${id}`)
-        setTreatments(res.data)
       } catch {
-        // not found
-      } finally {
-        setLoading(false)
+        // client not found
       }
+
+      try {
+        const result = await treatmentApi.getByClient(Number(id))
+        setTreatments(result)
+      } catch {
+        // treatments fetch failed — show empty list
+      }
+
+      setLoading(false)
     }
-    fetch()
+    fetchData()
   }, [id])
 
   if (loading) {

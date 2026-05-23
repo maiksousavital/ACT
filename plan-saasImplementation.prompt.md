@@ -158,11 +158,56 @@ Check off each item as it is completed. Execute phases in order — each phase k
 
 ---
 
-## Phase 8 — Admin Portal
+## Phase 8 — Backend ↔ Frontend Alignment
 
-- [ ] Build super-admin endpoints (manage companies, users, plans, billing)
-- [ ] Add `Controllers/Admin/SuperAdminController.cs`
-- [ ] Test admin management
+> Fixes mismatches between the frontend API calls and the backend endpoints/DTOs.
+
+### 8.1 Add missing `GET /api/treatment/by-client/{clientId}` endpoint
+- [x] Add `GetByClientAsync(int clientId)` to `ITreatmentService`
+- [x] Implement in `TreatmentService` (filter treatments by clientId)
+- [x] Add `[HttpGet("by-client/{clientId}")]` endpoint to `TreatmentsController`
+- [ ] Test via Swagger
+
+### 8.2 Fix User deactivate — frontend uses PUT, backend uses DELETE
+- [ ] Update frontend `userApi.ts` to use `DELETE /user/${id}` instead of `PUT /user/${id}/deactivate`
+
+### 8.3 Simplify `UpdateTreatmentRequest` backend DTO
+- [ ] Remove fields that shouldn't be editable from the frontend (`ClientId`, `TreatmentTypeId`, `NextFollowUpDate`, `FollowedUpAt`, `FollowUpNotes`) — keep only `TreatmentDate` and `Notes`
+- [ ] Update `TreatmentService.UpdateAsync` to only update allowed fields
+- [ ] Or: if full update is desired, expand the frontend form to send all fields — choose simpler option
+
+### 8.4 Add proper DTOs for Client create/update
+- [ ] Create `CreateClientRequest` DTO (FirstName, LastName, Email?, Phone?, Notes?)
+- [ ] Create `UpdateClientRequest` DTO (same fields)
+- [ ] Update `ClientController.Create` to accept `CreateClientRequest` instead of raw `Client` entity
+- [ ] Update `ClientController.Update` to accept `UpdateClientRequest` instead of raw `Client` entity
+- [ ] Update `ClientService` to map DTOs to entity
+
+### 8.5 Clean up unused `FollowUpPeriodsController`
+- [ ] Remove `FollowUpPeriodsController.cs` (metadata is already served by `TreatmentTypeController.GetAddEditMetadata`)
+
+### 8.7 Soft delete for Company
+- [ ] Add `IsActive` (bool, default true) property to `Company` entity
+- [ ] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => c.IsActive)`
+- [ ] Add EF migration
+- [ ] Add `DeactivateAsync(int id)` to `ICompanyService` — sets `IsActive = false`
+- [ ] Add `DELETE /api/company/{id}` endpoint to `CompanyController` — calls `DeactivateAsync` (soft delete)
+- [ ] Update frontend `companyApi.ts` — add `deactivate(id)` method using `DELETE`
+- [ ] Add deactivate button + confirm dialog to `CompanyListPage`
+
+### 8.8 Soft delete for Client
+- [ ] Verify `IsArchived` property already exists on `Client` entity (it does)
+- [ ] Add global query filter in `AppDbContext`: `.HasQueryFilter(c => !c.IsArchived)`
+- [ ] Add `IgnoreQueryFilters()` option for admin views that need to see archived clients
+- [ ] Add `ArchiveAsync(int id)` to `IClientService` — sets `IsArchived = true`
+- [ ] Add `DELETE /api/client/{id}` endpoint to `ClientController` — calls `ArchiveAsync` (soft delete)
+- [ ] Update frontend `clientApi.ts` — add `archive(id)` method using `DELETE`
+- [ ] Add archive button + confirm dialog to `ClientListPage`
+- [ ] Optionally: add "Show archived" toggle on `ClientListPage` to view archived clients
+
+### 8.6 Verify `TotalPages` is returned after backend restart
+- [ ] Restart backend and confirm `PagedResult` now includes `totalPages` in JSON responses
+- [ ] Verify pagination works correctly on all list pages
 
 ---
 
