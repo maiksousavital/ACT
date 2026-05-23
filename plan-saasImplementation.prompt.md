@@ -184,7 +184,7 @@ Check off each item as it is completed. Execute phases in order — each phase k
 - [x] Update `ClientService` to map DTOs to entity
 
 ### 8.5 Clean up unused `FollowUpPeriodsController`
-- [ ] Remove `FollowUpPeriodsController.cs` (metadata is already served by `TreatmentTypeController.GetAddEditMetadata`)
+- [x] Remove `FollowUpPeriodsController.cs` (metadata is already served by `TreatmentTypeController.GetAddEditMetadata`)
 
 ### 8.7 Soft delete for Company
 - [ ] Add `IsActive` (bool, default true) property to `Company` entity
