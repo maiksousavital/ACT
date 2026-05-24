@@ -21,7 +21,7 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
       </Button>
 
       <div className="d-none d-lg-block">
-        <h6 className="mb-0 text-muted">Automated Client Treatments</h6>
+        <h6 className="mb-0 text-muted">Aesthetic Client Tracker</h6>
       </div>
 
       <div className="d-flex align-items-center gap-2">
