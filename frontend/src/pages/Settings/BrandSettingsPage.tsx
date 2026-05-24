@@ -282,14 +282,14 @@ export function BrandSettingsPage() {
                     <div className="d-flex align-items-center gap-2">
                       <Form.Control
                         type="color"
-                        value={form.sidebarColor}
+                        value={form.sidebarColor || '#1E293B'}
                         onChange={(e) => handleChange('sidebarColor', e.target.value)}
                         className={styles.colorPreview}
                       />
                       <Form.Control
                         type="text"
                         size="sm"
-                        value={form.sidebarColor}
+                        value={form.sidebarColor || '#1E293B'}
                         onChange={(e) => handleChange('sidebarColor', e.target.value)}
                       />
                     </div>
@@ -302,14 +302,14 @@ export function BrandSettingsPage() {
                     <div className="d-flex align-items-center gap-2">
                       <Form.Control
                         type="color"
-                        value={form.backgroundColor}
+                        value={form.backgroundColor || '#F8FAFC'}
                         onChange={(e) => handleChange('backgroundColor', e.target.value)}
                         className={styles.colorPreview}
                       />
                       <Form.Control
                         type="text"
                         size="sm"
-                        value={form.backgroundColor}
+                        value={form.backgroundColor || '#F8FAFC'}
                         onChange={(e) => handleChange('backgroundColor', e.target.value)}
                       />
                     </div>
@@ -367,7 +367,7 @@ export function BrandSettingsPage() {
                 <small className="text-muted d-block mb-1">Top Bar</small>
                 <div
                   className={`${styles.previewBar} d-flex align-items-center px-3`}
-                  style={{ backgroundColor: form.primaryColor }}
+                  style={{ backgroundColor: form.primaryColor || '#6366F1' }}
                 >
                   {form.logoUrl ? (
                     <img src={form.logoUrl} alt="Logo" className="h-75" />
@@ -382,19 +382,19 @@ export function BrandSettingsPage() {
                 <div className="d-flex gap-2 flex-wrap">
                   <button
                     className="btn btn-sm text-white"
-                    style={{ backgroundColor: form.primaryColor }}
+                    style={{ backgroundColor: form.primaryColor || '#6366F1' }}
                   >
                     Primary
                   </button>
                   <button
                     className="btn btn-sm text-white"
-                    style={{ backgroundColor: form.secondaryColor }}
+                    style={{ backgroundColor: form.secondaryColor || '#06B6D4' }}
                   >
                     Secondary
                   </button>
                   <button
                     className="btn btn-sm text-white"
-                    style={{ backgroundColor: form.accentColor }}
+                    style={{ backgroundColor: form.accentColor || '#8B5CF6' }}
                   >
                     Accent
                   </button>
@@ -405,10 +405,10 @@ export function BrandSettingsPage() {
                 <small className="text-muted d-block mb-1">Sidebar</small>
                 <div
                   className={`${styles.previewBar} rounded`}
-                  style={{ backgroundColor: form.sidebarColor }}
+                  style={{ backgroundColor: form.sidebarColor || '#1E293B' }}
                 >
                   <div className="d-flex align-items-center h-100 px-3 gap-2">
-                    <div className="rounded-1" style={{ width: 12, height: 12, backgroundColor: form.primaryColor }} />
+                    <div className="rounded-1" style={{ width: 12, height: 12, backgroundColor: form.primaryColor || '#6366F1' }} />
                     <div className="rounded-1" style={{ width: 60, height: 8, backgroundColor: 'currentColor', opacity: 0.5 }} />
                   </div>
                 </div>
@@ -418,7 +418,7 @@ export function BrandSettingsPage() {
                 <small className="text-muted d-block mb-1">Page Background</small>
                 <div
                   className={`${styles.previewBar} rounded border`}
-                  style={{ backgroundColor: form.backgroundColor }}
+                  style={{ backgroundColor: form.backgroundColor || '#F8FAFC' }}
                 >
                   <div className="d-flex align-items-center h-100 px-3">
                     <small style={{ color: (form.backgroundColor || '#F8FAFC') > '#888888' ? '#333' : '#eee' }}>Content area</small>
@@ -430,23 +430,23 @@ export function BrandSettingsPage() {
                 <small className="text-muted d-block mb-1">Color Palette</small>
                 <div className="d-flex gap-3">
                   <div className="text-center">
-                    <div className={styles.colorPreview} style={{ backgroundColor: form.primaryColor }} />
+                    <div className={styles.colorPreview} style={{ backgroundColor: form.primaryColor || '#6366F1' }} />
                     <small className="d-block mt-1" style={{ fontSize: '0.7rem' }}>Primary</small>
                   </div>
                   <div className="text-center">
-                    <div className={styles.colorPreview} style={{ backgroundColor: form.secondaryColor }} />
+                    <div className={styles.colorPreview} style={{ backgroundColor: form.secondaryColor || '#06B6D4' }} />
                     <small className="d-block mt-1" style={{ fontSize: '0.7rem' }}>Secondary</small>
                   </div>
                   <div className="text-center">
-                    <div className={styles.colorPreview} style={{ backgroundColor: form.accentColor }} />
+                    <div className={styles.colorPreview} style={{ backgroundColor: form.accentColor || '#8B5CF6' }} />
                     <small className="d-block mt-1" style={{ fontSize: '0.7rem' }}>Accent</small>
                   </div>
                   <div className="text-center">
-                    <div className={styles.colorPreview} style={{ backgroundColor: form.sidebarColor }} />
+                    <div className={styles.colorPreview} style={{ backgroundColor: form.sidebarColor || '#1E293B' }} />
                     <small className="d-block mt-1" style={{ fontSize: '0.7rem' }}>Sidebar</small>
                   </div>
                   <div className="text-center">
-                    <div className={styles.colorPreview} style={{ backgroundColor: form.backgroundColor, border: '1px solid #ddd' }} />
+                    <div className={styles.colorPreview} style={{ backgroundColor: form.backgroundColor || '#F8FAFC', border: '1px solid #ddd' }} />
                     <small className="d-block mt-1" style={{ fontSize: '0.7rem' }}>Background</small>
                   </div>
                 </div>

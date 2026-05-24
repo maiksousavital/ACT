@@ -80,6 +80,11 @@ export function applyBrandToRoot(brand: BrandSettingsDto | null) {
   root.style.setProperty('--bs-secondary-rgb', hexToRgb(secondary))
   root.style.setProperty('--bs-info', accent)
   root.style.setProperty('--bs-info-rgb', hexToRgb(accent))
+  root.style.setProperty('--act-sidebar-bg', sidebarBg)
+  root.style.setProperty('--act-sidebar-text', sidebarText)
+  root.style.setProperty('--act-sidebar-text-muted', sidebarTextMuted)
+  root.style.setProperty('--act-page-bg', pageBg)
+  root.style.setProperty('--act-page-text', pageText)
 
   // Inject dynamic stylesheet
   let styleEl = document.getElementById('act-brand-styles') as HTMLStyleElement | null
