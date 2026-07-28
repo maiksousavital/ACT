@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.OpenApi.Models;
 
@@ -124,6 +125,30 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         RoleClaimType = "role",
         NameClaimType = "email"
+    };
+    // Reject tokens whose "tv" claim no longer matches the user's current TokenVersion, or
+    // whose account has since been deactivated — otherwise a deactivated user or a role/company
+    // change stays fully authorized under an old token until it naturally expires. This costs a
+    // DB lookup per authenticated request in exchange for revocability; see User.TokenVersion.
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var tokenVersionClaim = context.Principal?.FindFirstValue("tv");
+            if (userIdClaim == null || tokenVersionClaim == null || !int.TryParse(userIdClaim, out var userId))
+            {
+                context.Fail("Invalid token.");
+                return;
+            }
+
+            var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+            var user = await userRepository.GetByIdAsync(userId);
+            if (user == null || !user.IsActive || user.TokenVersion.ToString() != tokenVersionClaim)
+            {
+                context.Fail("Token has been revoked.");
+            }
+        }
     };
 });
 builder.Services.AddAuthorization();

@@ -12,5 +12,10 @@ public class User
     public Role Role { get; set; } = Role.User;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Bumped on deactivate/role/company change and on logout — included as a JWT claim so
+    // already-issued tokens can be rejected before their natural expiry (see JwtService,
+    // Program.cs OnTokenValidated, and AuthService.LogoutAsync).
+    public int TokenVersion { get; set; } = 0;
 }
 

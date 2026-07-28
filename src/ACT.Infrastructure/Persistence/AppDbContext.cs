@@ -100,6 +100,12 @@ public class AppDbContext : DbContext
         });
 
         // ── Company ───────────────────────────────────────────────────────────
+        // NOTE — cascade delete: Client/Treatment/TreatmentType/BrandSettings all declare
+        // .OnDelete(DeleteBehavior.Cascade) against this entity's FK, so a real
+        // DbContext.Remove(company)/hard delete would wipe an entire tenant's data with no
+        // recovery. CompanyService.DeleteAsync only ever sets IsDeleted — never call
+        // context.Companies.Remove(...) directly. Enforced by
+        // CompanyCascadeSafetyTests.CompanyService_DeleteAsync_SoftDeletesOnly_NeverCascadesToChildren.
         modelBuilder.Entity<Company>(e =>
         {
             e.HasKey(c => c.Id);

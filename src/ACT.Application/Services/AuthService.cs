@@ -88,6 +88,16 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task LogoutAsync(int userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null) return;
+
+        user.TokenVersion++;
+        await _userRepository.UpdateAsync(user);
+        await _userRepository.SaveChangesAsync();
+    }
+
     private async Task RecordLogin(int? userId, string email, int? companyId, string? ipAddress, string? userAgent, bool success, string? failureReason)
     {
         var record = new LoginHistory

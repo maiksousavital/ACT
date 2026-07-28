@@ -61,12 +61,21 @@ public class UserService : IUserService
 
         if (!string.IsNullOrWhiteSpace(request.Email))
             user.Email = request.Email;
-        if (request.CompanyId.HasValue)
+        if (request.CompanyId.HasValue && request.CompanyId.Value != user.CompanyId)
+        {
             user.CompanyId = request.CompanyId.Value;
-        if (request.Role.HasValue)
+            user.TokenVersion++; // stale "companyId" claim on any already-issued token
+        }
+        if (request.Role.HasValue && request.Role.Value != user.Role)
+        {
             user.Role = request.Role.Value;
-        if (request.IsActive.HasValue)
+            user.TokenVersion++; // stale "role" claim on any already-issued token
+        }
+        if (request.IsActive.HasValue && request.IsActive.Value != user.IsActive)
+        {
             user.IsActive = request.IsActive.Value;
+            user.TokenVersion++;
+        }
 
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
@@ -79,6 +88,7 @@ public class UserService : IUserService
         if (user == null) return false;
 
         user.IsActive = false;
+        user.TokenVersion++;
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
         return true;

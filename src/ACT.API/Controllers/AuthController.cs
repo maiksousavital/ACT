@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -50,6 +52,19 @@ public class AuthController : ControllerBase
         {
             return Conflict(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Revokes the caller's token (and every other outstanding token for the same account) by
+    /// bumping their TokenVersion — the next authenticated request on any old token gets 401.
+    /// </summary>
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var userId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        await _authService.LogoutAsync(userId);
+        return NoContent();
     }
 }
 

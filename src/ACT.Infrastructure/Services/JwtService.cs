@@ -32,6 +32,7 @@ public class JwtService : IJwtService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new("role", user.Role.ToString()),
+            new("tv", user.TokenVersion.ToString()),
         };
 
         if (user.CompanyId.HasValue)
