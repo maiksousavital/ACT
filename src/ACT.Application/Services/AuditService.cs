@@ -1,3 +1,4 @@
+using ACT.Application.Common;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
@@ -34,6 +35,7 @@ public class AuditService : IAuditService
 
     public async Task<PagedResult<AuditLogDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var (items, totalCount) = await _auditRepo.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<AuditLogDto>
         {
@@ -46,6 +48,7 @@ public class AuditService : IAuditService
 
     public async Task<PagedResult<LoginHistoryDto>> GetLoginHistoryPagedAsync(int? companyId, int page, int pageSize)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var (items, totalCount) = await _loginRepo.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<LoginHistoryDto>
         {

@@ -1,5 +1,6 @@
 using ACT.Domain.Entities;
 using ACT.Domain.Interfaces;
+using ACT.Infrastructure.Extensions;
 using ACT.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,9 +47,7 @@ public class CompanyRepository : ICompanyRepository
     public async Task<(IEnumerable<Company> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
     {
         var query = _context.Companies.OrderBy(c => c.Name);
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-        return (items, totalCount);
+        return await query.ToPagedResultAsync(page, pageSize);
     }
 }
 

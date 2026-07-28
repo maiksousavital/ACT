@@ -1,5 +1,6 @@
 using ACT.Domain.Entities;
 using ACT.Domain.Interfaces;
+using ACT.Infrastructure.Extensions;
 using ACT.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,8 +54,6 @@ public class ClientRepository : IClientRepository
         if (companyId.HasValue)
             query = query.Where(c => c.CompanyId == companyId.Value);
         query = query.OrderBy(c => c.LastName);
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-        return (items, totalCount);
+        return await query.ToPagedResultAsync(page, pageSize);
     }
 }

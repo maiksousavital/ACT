@@ -1,8 +1,8 @@
+using ACT.API.Extensions;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ACT.API.Controllers.Admin;
 
@@ -18,16 +18,9 @@ public class AuditController : ControllerBase
         _auditService = auditService;
     }
 
-    private int? CompanyId
-    {
-        get
-        {
-            var claim = User.FindFirstValue("companyId");
-            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
-        }
-    }
+    private int? CompanyId => User.GetCompanyId();
 
-    private bool IsSuperAdmin => User.FindFirstValue("role") == "SuperAdmin";
+    private bool IsSuperAdmin => User.IsSuperAdmin();
 
     /// <summary>
     /// GET /api/audit/logs — paginated audit trail.

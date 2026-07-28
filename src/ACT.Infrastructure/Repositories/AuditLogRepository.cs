@@ -1,5 +1,6 @@
 using ACT.Domain.Entities;
 using ACT.Domain.Interfaces;
+using ACT.Infrastructure.Extensions;
 using ACT.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,9 +43,7 @@ public class AuditLogRepository : IAuditLogRepository
         if (companyId.HasValue)
             query = query.Where(a => a.CompanyId == companyId.Value);
         query = query.OrderByDescending(a => a.Timestamp);
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-        return (items, totalCount);
+        return await query.ToPagedResultAsync(page, pageSize);
     }
 
     public async Task SaveChangesAsync()

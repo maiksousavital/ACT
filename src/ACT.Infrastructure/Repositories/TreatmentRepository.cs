@@ -1,5 +1,6 @@
 using ACT.Domain.Entities;
 using ACT.Domain.Interfaces;
+using ACT.Infrastructure.Extensions;
 using ACT.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,9 +76,7 @@ public class TreatmentRepository : ITreatmentRepository
         if (companyId.HasValue)
             query = query.Where(t => t.CompanyId == companyId.Value);
         var ordered = query.OrderByDescending(t => t.TreatmentDate);
-        var totalCount = await ordered.CountAsync();
-        var items = await ordered.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-        return (items, totalCount);
+        return await ordered.ToPagedResultAsync(page, pageSize);
     }
 
     public async Task UpdateAsync(Treatment treatment)

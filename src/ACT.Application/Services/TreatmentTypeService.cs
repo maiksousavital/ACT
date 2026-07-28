@@ -1,3 +1,4 @@
+using ACT.Application.Common;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
@@ -64,6 +65,7 @@ public class TreatmentTypeService : ITreatmentTypeService
 
     public async Task<PagedResult<TreatmentTypeDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var (items, totalCount) = await _treatmentTypeRepository.GetPagedAsync(companyId, page, pageSize);
         return new PagedResult<TreatmentTypeDto>
         {
