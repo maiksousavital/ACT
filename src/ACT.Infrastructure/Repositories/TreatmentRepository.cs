@@ -37,13 +37,15 @@ public class TreatmentRepository : ITreatmentRepository
         return await query.OrderBy(t => t.Client.LastName).ToListAsync();
     }
 
-    public async Task<IEnumerable<Treatment>> GetByClientAsync(int clientId)
+    public async Task<IEnumerable<Treatment>> GetByClientAsync(int clientId, int? companyId)
     {
-        return await _context.Treatments
+        var query = _context.Treatments
             .Include(t => t.Client)
             .Include(t => t.TreatmentType)
-            .Where(t => t.ClientId == clientId)
-            .ToListAsync();
+            .Where(t => t.ClientId == clientId);
+        if (companyId.HasValue)
+            query = query.Where(t => t.CompanyId == companyId.Value);
+        return await query.ToListAsync();
     }
     
     public async Task<Treatment?> GetByIdAsync(int id)

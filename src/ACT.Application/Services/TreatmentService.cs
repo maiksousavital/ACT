@@ -35,9 +35,9 @@ public class TreatmentService : ITreatmentService
         return treatments.Select(ToDto);
     }
 
-    public async Task<IEnumerable<TreatmentDto>> GetByClientAsync(int clientId)
+    public async Task<IEnumerable<TreatmentDto>> GetByClientAsync(int clientId, int? companyId)
     {
-        var treatments = await _treatments.GetByClientAsync(clientId);
+        var treatments = await _treatments.GetByClientAsync(clientId, companyId);
         return treatments.Select(ToDto);
     }
 
@@ -65,9 +65,13 @@ public class TreatmentService : ITreatmentService
     {
         var client = await _clients.GetByIdAsync(request.ClientId)
             ?? throw new KeyNotFoundException($"Client {request.ClientId} not found");
+        if (client.CompanyId != companyId)
+            throw new KeyNotFoundException($"Client {request.ClientId} not found");
 
         var type = await _types.GetByIdAsync(request.TreatmentTypeId)
             ?? throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
+        if (type.CompanyId != companyId)
+            throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
 
         var treatment = Treatment.Create(
             clientId: client.Id,
@@ -122,12 +126,23 @@ public class TreatmentService : ITreatmentService
         if (treatment == null)
             return null;
 
+        // If client changed, verify the new client belongs to the same company as the treatment
+        if (request.ClientId != treatment.ClientId)
+        {
+            var newClient = await _clients.GetByIdAsync(request.ClientId)
+                ?? throw new KeyNotFoundException($"Client {request.ClientId} not found");
+            if (newClient.CompanyId != treatment.CompanyId)
+                throw new KeyNotFoundException($"Client {request.ClientId} not found");
+        }
+
         // If treatment type changed, reload it for interval calculation
         TreatmentType type = treatment.TreatmentType;
         if (request.TreatmentTypeId != treatment.TreatmentTypeId)
         {
             type = await _types.GetByIdAsync(request.TreatmentTypeId)
                 ?? throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
+            if (type.CompanyId != treatment.CompanyId)
+                throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
         }
 
         // Update properties
@@ -164,6 +179,7 @@ public class TreatmentService : ITreatmentService
         return new TreatmentDto
         {
             Id                = t.Id,
+            CompanyId         = t.CompanyId,
             ClientId          = t.ClientId,
             ClientName        = t.Client.FullName,
             TreatmentTypeId   = t.TreatmentTypeId,

@@ -4,6 +4,7 @@ namespace ACT.Application.Dtos;
 public class TreatmentDto
 {
     public int      Id                { get; init; }
+    public int      CompanyId         { get; init; }
     public int      ClientId          { get; init; }
     public string    ClientName        { get; init; } = string.Empty;
     public int      TreatmentTypeId   { get; init; }
@@ -20,6 +21,7 @@ public class TreatmentDto
     public static TreatmentDto FromEntity(Treatment t) => new TreatmentDto
     {
         Id = t.Id,
+        CompanyId = t.CompanyId,
         ClientId = t.ClientId,
         TreatmentTypeId = t.TreatmentTypeId,
         TreatmentDate = t.TreatmentDate,

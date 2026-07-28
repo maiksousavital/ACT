@@ -6,7 +6,7 @@ public interface ITreatmentRepository
 {
     Task<IEnumerable<Treatment>> GetDueAsync(int? companyId);
     Task<IEnumerable<Treatment>> GetTodayAsync(int? companyId);
-    Task<IEnumerable<Treatment>> GetByClientAsync(int clientId);
+    Task<IEnumerable<Treatment>> GetByClientAsync(int clientId, int? companyId);
     Task<Treatment?> GetByIdAsync(int id);
     Task AddAsync(Treatment treatment);
     Task UpdateAsync(Treatment treatment);

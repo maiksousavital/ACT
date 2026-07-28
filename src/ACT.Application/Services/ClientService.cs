@@ -87,6 +87,7 @@ public class ClientService : IClientService
         return new ClientDto
         {
             Id = client.Id,
+            CompanyId = client.CompanyId,
             FirstName = client.FirstName,
             LastName = client.LastName,
             Phone = client.Phone,

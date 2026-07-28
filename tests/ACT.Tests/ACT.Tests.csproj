@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.14" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
@@ -22,6 +27,7 @@
     <ProjectReference Include="..\..\src\ACT.Domain\ACT.Domain.csproj" />
     <ProjectReference Include="..\..\src\ACT.Application\ACT.Application.csproj" />
     <ProjectReference Include="..\..\src\ACT.Infrastructure\ACT.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ACT.API\ACT.API.csproj" />
   </ItemGroup>
 
 </Project>

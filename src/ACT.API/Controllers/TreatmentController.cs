@@ -27,6 +27,8 @@ public class TreatmentsController : ControllerBase
         }
     }
 
+    private bool IsSuperAdmin => User.FindFirstValue("role") == "SuperAdmin";
+
     // POST /api/treatments
     [HttpPost]
     public async Task<IActionResult> Create(
@@ -60,6 +62,13 @@ public class TreatmentsController : ControllerBase
     {
         try
         {
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            // Non-SuperAdmin can only update treatments belonging to their own company
+            if (!IsSuperAdmin && existing.CompanyId != CompanyId)
+                return Forbid();
+
             var updated = await _service.UpdateAsync(id, request);
             if (updated == null)
                 return NotFound();
@@ -77,6 +86,11 @@ public class TreatmentsController : ControllerBase
     {
         var treatment = await _service.GetByIdAsync(id);
         if (treatment == null) return NotFound();
+
+        // Non-SuperAdmin can only view treatments belonging to their own company
+        if (!IsSuperAdmin && treatment.CompanyId != CompanyId)
+            return Forbid();
+
         return Ok(treatment);
     }
 
@@ -84,7 +98,7 @@ public class TreatmentsController : ControllerBase
     [HttpGet("by-client/{clientId}")]
     public async Task<IActionResult> GetByClient(int clientId)
     {
-        var treatments = await _service.GetByClientAsync(clientId);
+        var treatments = await _service.GetByClientAsync(clientId, CompanyId);
         return Ok(treatments);
     }
 }

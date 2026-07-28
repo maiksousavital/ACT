@@ -3,6 +3,7 @@ namespace ACT.Application.Dtos;
 public class TreatmentTypeDto
 {
     public int Id { get; set; }
+    public int CompanyId { get; set; }
     public string Name { get; set; } = string.Empty;
     public int FollowUpIntervalDays { get; set; }
     public string? Notes { get; set; }

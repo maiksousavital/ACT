@@ -28,6 +28,8 @@ public class TreatmentTypeController : ControllerBase
         }
     }
 
+    private bool IsSuperAdmin => User.FindFirstValue("role") == "SuperAdmin";
+
     // GET /api/treatmenttype/paged?page=1&pageSize=20
     [HttpGet("paged")]
     public async Task<ActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
@@ -41,6 +43,11 @@ public class TreatmentTypeController : ControllerBase
     {
         var type = await _treatmentTypeService.GetByIdAsync(id);
         if (type == null) return NotFound();
+
+        // Non-SuperAdmin can only view treatment types belonging to their own company
+        if (!IsSuperAdmin && type.CompanyId != CompanyId)
+            return Forbid();
+
         return Ok(type);
     }
 
@@ -64,6 +71,13 @@ public class TreatmentTypeController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<TreatmentTypeDto>> Update(int id, [FromBody] UpdateTreatmentTypeRequest request)
     {
+        var existing = await _treatmentTypeService.GetByIdAsync(id);
+        if (existing == null) return NotFound();
+
+        // Non-SuperAdmin can only update treatment types belonging to their own company
+        if (!IsSuperAdmin && existing.CompanyId != CompanyId)
+            return Forbid();
+
         var updated = await _treatmentTypeService.UpdateAsync(id, request);
         if (updated == null) return NotFound();
         return Ok(updated);

@@ -27,6 +27,8 @@ public class ClientController : ControllerBase
         }
     }
 
+    private bool IsSuperAdmin => User.FindFirstValue("role") == "SuperAdmin";
+
     [HttpPost]
     public async Task<ActionResult<ClientDto>> Create([FromBody] CreateClientRequest request)
     {
@@ -39,6 +41,13 @@ public class ClientController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<ClientDto>> Update(int id, [FromBody] UpdateClientRequest request)
     {
+        var existing = await _clientService.GetByIdAsync(id);
+        if (existing == null) return NotFound();
+
+        // Non-SuperAdmin can only update clients belonging to their own company
+        if (!IsSuperAdmin && existing.CompanyId != CompanyId)
+            return Forbid();
+
         var updated = await _clientService.UpdateAsync(id, request);
         if (updated == null) return NotFound();
         return Ok(updated);
@@ -57,12 +66,24 @@ public class ClientController : ControllerBase
     {
         var client = await _clientService.GetByIdAsync(id);
         if (client == null) return NotFound();
+
+        // Non-SuperAdmin can only view clients belonging to their own company
+        if (!IsSuperAdmin && client.CompanyId != CompanyId)
+            return Forbid();
+
         return Ok(client);
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
+        var existing = await _clientService.GetByIdAsync(id);
+        if (existing == null) return NotFound();
+
+        // Non-SuperAdmin can only delete clients belonging to their own company
+        if (!IsSuperAdmin && existing.CompanyId != CompanyId)
+            return Forbid();
+
         var result = await _clientService.DeleteAsync(id);
         if (!result) return NotFound();
         return NoContent();

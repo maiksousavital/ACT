@@ -30,6 +30,7 @@ public class TreatmentTypeService : ITreatmentTypeService
         return new TreatmentTypeDto
         {
             Id = type.Id,
+            CompanyId = type.CompanyId,
             Name = type.Name,
             FollowUpIntervalDays = type.FollowUpIntervalDays
         };

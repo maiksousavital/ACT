@@ -6,7 +6,7 @@ public interface ITreatmentService
 {
     Task<IEnumerable<TreatmentDto>> GetDueAsync(int? companyId);
     Task<IEnumerable<TreatmentDto>> GetTodayAsync(int? companyId);
-    Task<IEnumerable<TreatmentDto>> GetByClientAsync(int clientId);
+    Task<IEnumerable<TreatmentDto>> GetByClientAsync(int clientId, int? companyId);
     Task<TreatmentDto?> GetByIdAsync(int id);
     Task<TreatmentDto> CreateAsync(int companyId, CreateTreatmentRequest request);
     Task<PagedResult<TreatmentDto>> GetPagedAsync(int? companyId, int page, int pageSize);
