@@ -3,3 +3,11 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+
+# Local SQLite database — never commit real client data
+*.db
+*.db-shm
+*.db-wal
+
+# Environment-specific secrets — configure via env vars / secrets manager instead
+src/ACT.API/appsettings.Production.json

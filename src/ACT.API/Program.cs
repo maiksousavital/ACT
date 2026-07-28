@@ -83,7 +83,15 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 
 // ── Authentication ────────────────────────────────────────────────────────────
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-var jwtSecret = builder.Configuration["JwtSettings:Secret"]!;
+// Set via `dotnet user-secrets set "JwtSettings:Secret" "..."` locally, or the
+// JwtSettings__Secret environment variable in every other environment — never in appsettings*.json.
+var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException(
+        "JwtSettings:Secret is not configured. Set it via 'dotnet user-secrets set \"JwtSettings:Secret\" \"<value>\"' " +
+        "(local dev) or the JwtSettings__Secret environment variable (all other environments).");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -130,6 +138,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("AdminSeeder");
+    await AdminSeeder.SeedSuperAdminAsync(db, hasher, seedLogger);
 }
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────

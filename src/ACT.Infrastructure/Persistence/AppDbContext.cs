@@ -190,18 +190,8 @@ public class AppDbContext : DbContext
             }
         );
 
-        // Seed SuperAdmin user — password: "Admin123!" (BCrypt hash)
-        modelBuilder.Entity<User>().HasData(
-            new User
-            {
-                Id = 1,
-                Email = "admin@act.local",
-                PasswordHash = "$2a$11$UxNn19pLPpkpcqV/4rWT4OwNL8zxy9JA0oYtVzYhKgaveFZAVrkp.",
-                CompanyId = null,
-                Role = Role.SuperAdmin,
-                IsActive = true,
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            }
-        );
+        // No fixed SuperAdmin seed here — a known password baked into every deployment is a
+        // standing credential leak. See AdminSeeder.SeedSuperAdminAsync, run once at startup,
+        // which creates a SuperAdmin with a random (or env-provided) password only if none exists.
     }
 }
