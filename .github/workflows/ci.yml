@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore ACT.sln
+
+      - name: Build
+        run: dotnet build ACT.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test ACT.sln --no-build --configuration Release --verbosity normal
+
+      - name: Install dotnet-ef
+        run: |
+          dotnet tool install --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      # Fails the build if AppDbContext's model has drifted from the last committed migration
+      # (e.g. an entity/property change with no corresponding `dotnet ef migrations add`).
+      # Uses AppDbContextFactory (IDesignTimeDbContextFactory), so no real database or app
+      # secrets are needed — it only compares the compiled model against the migration snapshot.
+      - name: Check for pending EF Core model changes
+        working-directory: src/ACT.API
+        run: >
+          dotnet ef migrations has-pending-model-changes
+          --project ../ACT.Infrastructure/ACT.Infrastructure.csproj
+          --startup-project .
