@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using ACT.Domain.Entities;
 
 namespace ACT.Application.Dtos;
@@ -36,9 +37,15 @@ public class TreatmentDto
 
 public class CreateTreatmentRequest
 {
+    [Range(1, int.MaxValue)]
     public int ClientId { get; set; }
+
+    [Range(1, int.MaxValue)]
     public int TreatmentTypeId { get; set; }
+
     public DateTime TreatmentDate { get; set; }
+
+    [MaxLength(1000)]
     public string? Notes { get; set; }
 }
 
