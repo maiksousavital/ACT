@@ -13,32 +13,38 @@ using Microsoft.EntityFrameworkCore;
 namespace ACT.Tests;
 
 /// <summary>
-/// Regression tests for the A1 IDOR fix: an authenticated user from Company A must never be able
-/// to read, modify, or delete Company B's clients, treatments, or treatment types via direct ID
-/// access — and Treatment create/update must reject cross-company Client/TreatmentType references.
+/// Regression tests for the A1 IDOR fix and the B1 EF Core tenant query filter: an authenticated
+/// user from Company A must never be able to read, modify, or delete Company B's clients,
+/// treatments, or treatment types — whether through the controller's explicit CompanyId check
+/// (A1) or, with that check hypothetically removed, through the DbContext-level global query
+/// filter alone (B1). Each test builds its own AppDbContext bound to a specific caller's
+/// ITenantContext, mirroring how a real request gets a freshly-scoped DbContext per request.
 /// </summary>
 public class TenantIsolationTests
 {
     private const int CompanyA = 1;
     private const int CompanyB = 2;
 
-    private static AppDbContext BuildContext()
+    private class FakeTenantContext : ITenantContext
     {
-        // Unique DB name per test — no EnsureCreated() call, so the model's HasData seed
-        // (Company/TreatmentType/User with Id=1) never gets inserted and can't collide with
-        // the fixture data below.
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
+        public int? CompanyId { get; init; }
+        public bool IsSuperAdmin { get; init; }
+
+        public static readonly FakeTenantContext System = new() { IsSuperAdmin = true };
+        public static FakeTenantContext For(int companyId) => new() { CompanyId = companyId };
     }
 
-    private class Fixture
+    private static AppDbContext BuildContext(string dbName, ITenantContext tenantContext)
     {
-        public required AppDbContext Context;
-        public required IClientService ClientService;
-        public required ITreatmentService TreatmentService;
-        public required ITreatmentTypeService TreatmentTypeService;
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+        return new AppDbContext(options, tenantContext);
+    }
+
+    private class World
+    {
+        public required string DbName;
         public required Client ClientA;
         public required Client ClientB;
         public required TreatmentType TypeA;
@@ -47,21 +53,27 @@ public class TenantIsolationTests
         public required Treatment TreatmentB;
     }
 
-    private static Fixture BuildFixture()
+    /// <summary>
+    /// Seeds fixture data for two companies using an unrestricted (SuperAdmin) context — a real
+    /// request would never seed data this way, but the fixture needs to write both companies'
+    /// rows before any tenant-scoped context can read either of them.
+    /// </summary>
+    private static World BuildWorld()
     {
-        var context = BuildContext();
+        var dbName = Guid.NewGuid().ToString();
+        using var seedContext = BuildContext(dbName, FakeTenantContext.System);
 
-        context.Companies.AddRange(
+        seedContext.Companies.AddRange(
             new Company { Id = CompanyA, Name = "Company A" },
             new Company { Id = CompanyB, Name = "Company B" });
 
         var clientA = new Client { Id = 1, FirstName = "Alice", LastName = "Anderson", CompanyId = CompanyA };
         var clientB = new Client { Id = 2, FirstName = "Bob", LastName = "Brown", CompanyId = CompanyB };
-        context.Clients.AddRange(clientA, clientB);
+        seedContext.Clients.AddRange(clientA, clientB);
 
         var typeA = new TreatmentType { Id = 1, Name = "Botox", FollowUpIntervalDays = 90, IsActive = true, CompanyId = CompanyA };
         var typeB = new TreatmentType { Id = 2, Name = "Filler", FollowUpIntervalDays = 180, IsActive = true, CompanyId = CompanyB };
-        context.TreatmentTypes.AddRange(typeA, typeB);
+        seedContext.TreatmentTypes.AddRange(typeA, typeB);
 
         var treatmentA = new Treatment
         {
@@ -81,26 +93,56 @@ public class TenantIsolationTests
             NextFollowUpDate = DateTime.UtcNow.AddDays(180),
             CompanyId = CompanyB
         };
-        context.Treatments.AddRange(treatmentA, treatmentB);
+        seedContext.Treatments.AddRange(treatmentA, treatmentB);
 
-        context.SaveChanges();
+        seedContext.SaveChanges();
 
-        var clientRepo = new ClientRepository(context);
-        var treatmentRepo = new TreatmentRepository(context);
-        var typeRepo = new TreatmentTypeRepository(context);
-
-        return new Fixture
+        return new World
         {
-            Context = context,
-            ClientService = new ClientService(clientRepo),
-            TreatmentService = new TreatmentService(treatmentRepo, clientRepo, typeRepo),
-            TreatmentTypeService = new TreatmentTypeService(typeRepo),
+            DbName = dbName,
             ClientA = clientA,
             ClientB = clientB,
             TypeA = typeA,
             TypeB = typeB,
             TreatmentA = treatmentA,
             TreatmentB = treatmentB
+        };
+    }
+
+    private sealed class Scope : IDisposable
+    {
+        public required AppDbContext Context;
+        public required IClientService ClientService;
+        public required ITreatmentService TreatmentService;
+        public required ITreatmentTypeService TreatmentTypeService;
+        public required ClientRepository ClientRepository;
+        public required TreatmentRepository TreatmentRepository;
+        public required TreatmentTypeRepository TreatmentTypeRepository;
+        public void Dispose() => Context.Dispose();
+    }
+
+    /// <summary>
+    /// Builds a fresh AppDbContext (and services on top of it) scoped to one caller's tenant —
+    /// same in-memory database, different query-filter binding. This is what DI hands each
+    /// controller action a real request: a new scoped DbContext resolved for that caller only.
+    /// </summary>
+    private static Scope ScopeFor(string dbName, int? companyId, bool isSuperAdmin = false)
+    {
+        var tenantContext = isSuperAdmin ? FakeTenantContext.System : FakeTenantContext.For(companyId!.Value);
+        var context = BuildContext(dbName, tenantContext);
+        var clientRepo = new ClientRepository(context);
+        var treatmentRepo = new TreatmentRepository(context);
+        var typeRepo = new TreatmentTypeRepository(context);
+
+        return new Scope
+        {
+            Context = context,
+            ClientService = new ClientService(clientRepo),
+            TreatmentService = new TreatmentService(treatmentRepo, clientRepo, typeRepo),
+            TreatmentTypeService = new TreatmentTypeService(typeRepo),
+            ClientRepository = clientRepo,
+            TreatmentRepository = treatmentRepo,
+            TreatmentTypeRepository = typeRepo
         };
     }
 
@@ -117,57 +159,65 @@ public class TenantIsolationTests
     }
 
     // ── ClientController ─────────────────────────────────────────────────────
+    // Cross-company single-record access now 404s rather than 403: the query filter hides the
+    // row before the controller's explicit Forbid check ever sees it, which also means a cross-
+    // tenant caller can no longer distinguish "exists but isn't yours" from "doesn't exist".
 
     [Fact]
-    public async Task Client_GetById_CrossCompany_ReturnsForbid()
+    public async Task Client_GetById_CrossCompany_ReturnsNotFound()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetById(f.ClientB.Id);
+        var result = await controller.GetById(world.ClientB.Id);
 
-        Assert.IsType<ForbidResult>(result.Result);
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
     public async Task Client_GetById_SameCompany_ReturnsOk()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetById(f.ClientA.Id);
+        var result = await controller.GetById(world.ClientA.Id);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var dto = Assert.IsType<ClientDto>(ok.Value);
-        Assert.Equal(f.ClientA.Id, dto.Id);
+        Assert.Equal(world.ClientA.Id, dto.Id);
     }
 
     [Fact]
-    public async Task Client_Update_CrossCompany_ReturnsForbidAndDoesNotMutate()
+    public async Task Client_Update_CrossCompany_ReturnsNotFoundAndDoesNotMutate()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, CompanyA);
 
         var request = new UpdateClientRequest { FirstName = "Hacked", LastName = "Name" };
-        var result = await controller.Update(f.ClientB.Id, request);
+        var result = await controller.Update(world.ClientB.Id, request);
 
-        Assert.IsType<ForbidResult>(result.Result);
-        var untouched = await f.Context.Clients.AsNoTracking().FirstAsync(c => c.Id == f.ClientB.Id);
+        Assert.IsType<NotFoundResult>(result.Result);
+        using var verify = BuildContext(world.DbName, FakeTenantContext.System);
+        var untouched = await verify.Clients.AsNoTracking().FirstAsync(c => c.Id == world.ClientB.Id);
         Assert.Equal("Bob", untouched.FirstName);
     }
 
     [Fact]
     public async Task Client_Update_SameCompany_ReturnsOk()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, CompanyA);
 
         var request = new UpdateClientRequest { FirstName = "Alicia", LastName = "Anderson" };
-        var result = await controller.Update(f.ClientA.Id, request);
+        var result = await controller.Update(world.ClientA.Id, request);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var dto = Assert.IsType<ClientDto>(ok.Value);
@@ -175,27 +225,30 @@ public class TenantIsolationTests
     }
 
     [Fact]
-    public async Task Client_Delete_CrossCompany_ReturnsForbidAndDoesNotDelete()
+    public async Task Client_Delete_CrossCompany_ReturnsNotFoundAndDoesNotDelete()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.Delete(f.ClientB.Id);
+        var result = await controller.Delete(world.ClientB.Id);
 
-        Assert.IsType<ForbidResult>(result);
-        var untouched = await f.Context.Clients.AsNoTracking().FirstAsync(c => c.Id == f.ClientB.Id);
+        Assert.IsType<NotFoundResult>(result);
+        using var verify = BuildContext(world.DbName, FakeTenantContext.System);
+        var untouched = await verify.Clients.AsNoTracking().FirstAsync(c => c.Id == world.ClientB.Id);
         Assert.False(untouched.IsDeleted);
     }
 
     [Fact]
     public async Task Client_GetById_SuperAdmin_BypassesCompanyCheck()
     {
-        var f = BuildFixture();
-        var controller = new ClientController(f.ClientService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, companyId: null, isSuperAdmin: true);
+        var controller = new ClientController(scope.ClientService);
         SetUser(controller, companyId: null, role: "SuperAdmin");
 
-        var result = await controller.GetById(f.ClientB.Id);
+        var result = await controller.GetById(world.ClientB.Id);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         Assert.IsType<ClientDto>(ok.Value);
@@ -204,46 +257,50 @@ public class TenantIsolationTests
     // ── TreatmentsController ─────────────────────────────────────────────────
 
     [Fact]
-    public async Task Treatment_GetById_CrossCompany_ReturnsForbid()
+    public async Task Treatment_GetById_CrossCompany_ReturnsNotFound()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentsController(f.TreatmentService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentsController(scope.TreatmentService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetById(f.TreatmentB.Id);
+        var result = await controller.GetById(world.TreatmentB.Id);
 
-        Assert.IsType<ForbidResult>(result.Result);
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task Treatment_Update_CrossCompany_ReturnsForbidAndDoesNotMutate()
+    public async Task Treatment_Update_CrossCompany_ReturnsNotFoundAndDoesNotMutate()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentsController(f.TreatmentService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentsController(scope.TreatmentService);
         SetUser(controller, CompanyA);
 
         var request = new UpdateTreatmentRequest
         {
-            ClientId = f.ClientB.Id,
-            TreatmentTypeId = f.TypeB.Id,
+            ClientId = world.ClientB.Id,
+            TreatmentTypeId = world.TypeB.Id,
             TreatmentDate = DateTime.UtcNow,
             Notes = "hacked"
         };
-        var result = await controller.Update(f.TreatmentB.Id, request);
+        var result = await controller.Update(world.TreatmentB.Id, request);
 
-        Assert.IsType<ForbidResult>(result);
-        var untouched = await f.Context.Treatments.AsNoTracking().FirstAsync(t => t.Id == f.TreatmentB.Id);
+        Assert.IsType<NotFoundResult>(result);
+        using var verify = BuildContext(world.DbName, FakeTenantContext.System);
+        var untouched = await verify.Treatments.AsNoTracking().FirstAsync(t => t.Id == world.TreatmentB.Id);
         Assert.Null(untouched.Notes);
     }
 
     [Fact]
     public async Task Treatment_GetByClient_CrossCompanyClient_ReturnsEmpty()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentsController(f.TreatmentService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentsController(scope.TreatmentService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetByClient(f.ClientB.Id);
+        var result = await controller.GetByClient(world.ClientB.Id);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var treatments = Assert.IsAssignableFrom<IEnumerable<TreatmentDto>>(ok.Value);
@@ -253,11 +310,12 @@ public class TenantIsolationTests
     [Fact]
     public async Task Treatment_GetByClient_SameCompanyClient_ReturnsResults()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentsController(f.TreatmentService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentsController(scope.TreatmentService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetByClient(f.ClientA.Id);
+        var result = await controller.GetByClient(world.ClientA.Id);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var treatments = Assert.IsAssignableFrom<IEnumerable<TreatmentDto>>(ok.Value);
@@ -267,41 +325,45 @@ public class TenantIsolationTests
     // ── TreatmentTypeController ──────────────────────────────────────────────
 
     [Fact]
-    public async Task TreatmentType_GetById_CrossCompany_ReturnsForbid()
+    public async Task TreatmentType_GetById_CrossCompany_ReturnsNotFound()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentTypeController(f.TreatmentTypeService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentTypeController(scope.TreatmentTypeService);
         SetUser(controller, CompanyA);
 
-        var result = await controller.GetById(f.TypeB.Id);
+        var result = await controller.GetById(world.TypeB.Id);
 
-        Assert.IsType<ForbidResult>(result.Result);
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]
-    public async Task TreatmentType_Update_CrossCompany_ReturnsForbidAndDoesNotMutate()
+    public async Task TreatmentType_Update_CrossCompany_ReturnsNotFoundAndDoesNotMutate()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentTypeController(f.TreatmentTypeService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentTypeController(scope.TreatmentTypeService);
         SetUser(controller, CompanyA);
 
         var request = new UpdateTreatmentTypeRequest { Name = "Hacked", FollowUpIntervalDays = 1, IsActive = true };
-        var result = await controller.Update(f.TypeB.Id, request);
+        var result = await controller.Update(world.TypeB.Id, request);
 
-        Assert.IsType<ForbidResult>(result.Result);
-        var untouched = await f.Context.TreatmentTypes.AsNoTracking().FirstAsync(t => t.Id == f.TypeB.Id);
+        Assert.IsType<NotFoundResult>(result.Result);
+        using var verify = BuildContext(world.DbName, FakeTenantContext.System);
+        var untouched = await verify.TreatmentTypes.AsNoTracking().FirstAsync(t => t.Id == world.TypeB.Id);
         Assert.Equal("Filler", untouched.Name);
     }
 
     [Fact]
     public async Task TreatmentType_Update_SameCompany_ReturnsOk()
     {
-        var f = BuildFixture();
-        var controller = new TreatmentTypeController(f.TreatmentTypeService);
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var controller = new TreatmentTypeController(scope.TreatmentTypeService);
         SetUser(controller, CompanyA);
 
         var request = new UpdateTreatmentTypeRequest { Name = "Botox Renamed", FollowUpIntervalDays = 90, IsActive = true };
-        var result = await controller.Update(f.TypeA.Id, request);
+        var result = await controller.Update(world.TypeA.Id, request);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var dto = Assert.IsType<TreatmentTypeDto>(ok.Value);
@@ -313,78 +375,149 @@ public class TenantIsolationTests
     [Fact]
     public async Task TreatmentService_CreateAsync_ClientFromOtherCompany_ThrowsKeyNotFound()
     {
-        var f = BuildFixture();
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
         var request = new CreateTreatmentRequest
         {
-            ClientId = f.ClientB.Id,
-            TreatmentTypeId = f.TypeA.Id,
+            ClientId = world.ClientB.Id,
+            TreatmentTypeId = world.TypeA.Id,
             TreatmentDate = DateTime.UtcNow
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => f.TreatmentService.CreateAsync(CompanyA, request));
+            () => scope.TreatmentService.CreateAsync(CompanyA, request));
     }
 
     [Fact]
     public async Task TreatmentService_CreateAsync_TreatmentTypeFromOtherCompany_ThrowsKeyNotFound()
     {
-        var f = BuildFixture();
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
         var request = new CreateTreatmentRequest
         {
-            ClientId = f.ClientA.Id,
-            TreatmentTypeId = f.TypeB.Id,
+            ClientId = world.ClientA.Id,
+            TreatmentTypeId = world.TypeB.Id,
             TreatmentDate = DateTime.UtcNow
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => f.TreatmentService.CreateAsync(CompanyA, request));
+            () => scope.TreatmentService.CreateAsync(CompanyA, request));
     }
 
     [Fact]
     public async Task TreatmentService_UpdateAsync_ReassignToOtherCompanyClient_ThrowsKeyNotFound()
     {
-        var f = BuildFixture();
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
         var request = new UpdateTreatmentRequest
         {
-            ClientId = f.ClientB.Id,
-            TreatmentTypeId = f.TreatmentA.TreatmentTypeId,
+            ClientId = world.ClientB.Id,
+            TreatmentTypeId = world.TreatmentA.TreatmentTypeId,
             TreatmentDate = DateTime.UtcNow
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => f.TreatmentService.UpdateAsync(f.TreatmentA.Id, request));
+            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request));
     }
 
     [Fact]
     public async Task TreatmentService_UpdateAsync_ReassignToOtherCompanyTreatmentType_ThrowsKeyNotFound()
     {
-        var f = BuildFixture();
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
         var request = new UpdateTreatmentRequest
         {
-            ClientId = f.TreatmentA.ClientId,
-            TreatmentTypeId = f.TypeB.Id,
+            ClientId = world.TreatmentA.ClientId,
+            TreatmentTypeId = world.TypeB.Id,
             TreatmentDate = DateTime.UtcNow
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => f.TreatmentService.UpdateAsync(f.TreatmentA.Id, request));
+            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request));
     }
 
     [Fact]
     public async Task TreatmentService_UpdateAsync_SameCompanyReferences_Succeeds()
     {
-        var f = BuildFixture();
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
         var request = new UpdateTreatmentRequest
         {
-            ClientId = f.TreatmentA.ClientId,
-            TreatmentTypeId = f.TreatmentA.TreatmentTypeId,
+            ClientId = world.TreatmentA.ClientId,
+            TreatmentTypeId = world.TreatmentA.TreatmentTypeId,
             TreatmentDate = DateTime.UtcNow,
             Notes = "updated"
         };
 
-        var result = await f.TreatmentService.UpdateAsync(f.TreatmentA.Id, request);
+        var result = await scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request);
 
         Assert.NotNull(result);
         Assert.Equal("updated", result!.Notes);
+    }
+
+    // ── B1 — EF Core global query filter, independent of any controller check ──────────────
+
+    [Fact]
+    public async Task QueryFilter_ClientRepository_CrossCompany_HidesRowEvenWithoutControllerCheck()
+    {
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+
+        // Calling the repository directly — no controller, no explicit CompanyId comparison —
+        // proves the tenant boundary holds at the data layer itself, not just by convention.
+        var result = await scope.ClientRepository.GetByIdAsync(world.ClientB.Id);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task QueryFilter_TreatmentRepository_CrossCompany_HidesRow()
+    {
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+
+        var result = await scope.TreatmentRepository.GetByIdAsync(world.TreatmentB.Id);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task QueryFilter_TreatmentTypeRepository_CrossCompany_HidesRow()
+    {
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, CompanyA);
+
+        var result = await scope.TreatmentTypeRepository.GetByIdAsync(world.TypeB.Id);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task QueryFilter_SuperAdmin_SeesBothCompanies()
+    {
+        var world = BuildWorld();
+        using var scope = ScopeFor(world.DbName, companyId: null, isSuperAdmin: true);
+
+        var clients = await scope.Context.Clients.ToListAsync();
+
+        Assert.Contains(clients, c => c.Id == world.ClientA.Id);
+        Assert.Contains(clients, c => c.Id == world.ClientB.Id);
+    }
+
+    [Fact]
+    public async Task QueryFilter_Client_StillHidesSoftDeletedRowsWithinSameCompany()
+    {
+        var world = BuildWorld();
+        using (var deleteScope = ScopeFor(world.DbName, CompanyA))
+        {
+            var client = await deleteScope.Context.Clients.FirstAsync(c => c.Id == world.ClientA.Id);
+            client.IsDeleted = true;
+            await deleteScope.Context.SaveChangesAsync();
+        }
+
+        using var scope = ScopeFor(world.DbName, CompanyA);
+        var result = await scope.ClientRepository.GetByIdAsync(world.ClientA.Id);
+
+        Assert.Null(result);
     }
 }

@@ -1,9 +1,9 @@
+using ACT.API.Extensions;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ACT.API.Controllers;
 
@@ -19,16 +19,9 @@ public class TreatmentTypeController : ControllerBase
         _treatmentTypeService = treatmentTypeService;
     }
 
-    private int? CompanyId
-    {
-        get
-        {
-            var claim = User.FindFirstValue("companyId");
-            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
-        }
-    }
+    private int? CompanyId => User.GetCompanyId();
 
-    private bool IsSuperAdmin => User.FindFirstValue("role") == "SuperAdmin";
+    private bool IsSuperAdmin => User.IsSuperAdmin();
 
     // GET /api/treatmenttype/paged?page=1&pageSize=20
     [HttpGet("paged")]

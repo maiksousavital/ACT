@@ -1,5 +1,6 @@
 // ACT.API/Program.cs
 using ACT.API.Middleware;
+using ACT.API.Services;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Interfaces;
 using ACT.Infrastructure.Persistence;
@@ -21,6 +22,11 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Global exception handling ─────────────────────────────────────────────────
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+// ── Tenant context — resolves the caller's company scope from the JWT for EF Core's
+// global query filters (defense-in-depth tenant isolation, see AppDbContext) ───────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, HttpContextTenantContext>();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>

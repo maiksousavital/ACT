@@ -1,4 +1,5 @@
 // ACT.Infrastructure/Persistence/AppDbContext.cs
+using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
 using ACT.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,12 @@ namespace ACT.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    private readonly ITenantContext _tenantContext;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenantContext) : base(options)
+    {
+        _tenantContext = tenantContext;
+    }
 
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<TreatmentType> TreatmentTypes => Set<TreatmentType>();
@@ -30,9 +36,12 @@ public class AppDbContext : DbContext
             e.Property(c => c.Email).HasMaxLength(150);
             e.Property(c => c.Notes).HasMaxLength(1000);
 
-            // Global query filter — deleted clients are invisible
-            // unless explicitly queried with .IgnoreQueryFilters()
-            e.HasQueryFilter(c => !c.IsDeleted);
+            // Global query filter — deleted clients are invisible, and non-SuperAdmin callers
+            // only ever see their own company's rows. Defense-in-depth for the tenant checks
+            // controllers already perform; bypassed entirely for SuperAdmin/system callers.
+            // Explicit .IgnoreQueryFilters() opts out of both at once.
+            e.HasQueryFilter(c => !c.IsDeleted &&
+                (_tenantContext.IsSuperAdmin || c.CompanyId == _tenantContext.CompanyId));
 
             e.HasMany(c => c.Treatments)
              .WithOne(t => t.Client)
@@ -54,6 +63,9 @@ public class AppDbContext : DbContext
 
             // Prevent duplicate treatment type names
             e.HasIndex(t => t.Name).IsUnique();
+
+            // Global query filter — see Client above for rationale.
+            e.HasQueryFilter(t => _tenantContext.IsSuperAdmin || t.CompanyId == _tenantContext.CompanyId);
 
             e.HasMany(t => t.Treatments)
              .WithOne(t => t.TreatmentType)
@@ -77,6 +89,9 @@ public class AppDbContext : DbContext
             // Index for the most common query — due follow-ups
             e.HasIndex(t => t.NextFollowUpDate);
             e.HasIndex(t => t.ClientId);
+
+            // Global query filter — see Client above for rationale.
+            e.HasQueryFilter(t => _tenantContext.IsSuperAdmin || t.CompanyId == _tenantContext.CompanyId);
 
             e.HasOne(t => t.Company)
              .WithMany(co => co.Treatments)
