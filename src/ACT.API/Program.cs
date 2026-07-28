@@ -1,4 +1,5 @@
 // ACT.API/Program.cs
+using ACT.API.Middleware;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Interfaces;
 using ACT.Infrastructure.Persistence;
@@ -7,13 +8,19 @@ using ACT.Infrastructure.Services;
 using ACT.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using System.Threading.RateLimiting;
 using Microsoft.OpenApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Global exception handling ─────────────────────────────────────────────────
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -114,19 +121,41 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddAuthorization();
-// ── CORS — allow React PWA running on a different port during development ─────
+// ── CORS — origins come from config so prod can lock this down without a code change ─────
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:5173", "https://localhost:5173"]; // Vite dev server default
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowPwa", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",  // Vite dev server default
-                "https://localhost:5173"
-            )
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+// ── Rate limiting — throttle brute-force login attempts per client IP ─────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = "Too many login attempts. Please try again in a minute." },
+            cancellationToken);
+    };
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -145,6 +174,17 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ── Middleware pipeline ───────────────────────────────────────────────────────
+app.UseExceptionHandler();
+
+// ── Security headers — applied to every response, ahead of any terminal middleware ────
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -161,8 +201,13 @@ var hasHttps = app.Urls.Any(url => url.StartsWith("https://", StringComparison.O
 if (hasHttps)
 {
     app.UseHttpsRedirection();
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHsts();
+    }
 }
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

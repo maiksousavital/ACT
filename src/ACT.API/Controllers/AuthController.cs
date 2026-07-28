@@ -2,6 +2,7 @@ using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ACT.API.Controllers;
 
@@ -20,6 +21,7 @@ public class AuthController : ControllerBase
     /// Public — authenticate with email and password, returns JWT.
     /// </summary>
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
