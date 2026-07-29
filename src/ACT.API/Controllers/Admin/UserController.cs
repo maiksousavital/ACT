@@ -86,15 +86,10 @@ public class UserController : ControllerBase
                 return Forbid();
         }
 
-        try
-        {
-            var user = await _userService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        // A duplicate email throws InvalidOperationException, mapped to 409 by
+        // GlobalExceptionHandler (see A4) — no local catch needed.
+        var user = await _userService.CreateAsync(request);
+        return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
     }
 
     /// <summary>

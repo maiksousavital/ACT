@@ -1,8 +1,8 @@
+using ACT.API.Extensions;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ACT.API.Controllers;
 
@@ -18,14 +18,7 @@ public class FollowUpsController : ControllerBase
         _service = service;
     }
 
-    private int? CompanyId
-    {
-        get
-        {
-            var claim = User.FindFirstValue("companyId");
-            return string.IsNullOrEmpty(claim) ? null : int.Parse(claim);
-        }
-    }
+    private int? CompanyId => User.GetCompanyId();
 
     // GET /api/followups/due
     // All outstanding follow-ups — used by the Treatments page
@@ -52,18 +45,9 @@ public class FollowUpsController : ControllerBase
         int id,
         [FromBody] CompleteFollowUpRequest request)
     {
-        try
-        {
-            var result = await _service.CompleteFollowUpAsync(id, request);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        // Unknown id -> KeyNotFoundException (404); already-followed-up -> InvalidOperationException
+        // (409) — both mapped by GlobalExceptionHandler (see A4), no local catch needed.
+        var result = await _service.CompleteFollowUpAsync(id, request);
+        return Ok(result);
     }
 }

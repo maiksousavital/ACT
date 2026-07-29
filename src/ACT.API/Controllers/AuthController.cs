@@ -43,15 +43,10 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        try
-        {
-            var result = await _authService.RegisterAsync(request);
-            return Created("", result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
+        // A duplicate email throws InvalidOperationException, mapped to 409 by
+        // GlobalExceptionHandler (see A4) — no local catch needed.
+        var result = await _authService.RegisterAsync(request);
+        return Created("", result);
     }
 
     /// <summary>

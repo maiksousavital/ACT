@@ -27,18 +27,13 @@ public class TreatmentsController : ControllerBase
     public async Task<IActionResult> Create(
         [FromBody] CreateTreatmentRequest request)
     {
-        try
-        {
-            if (CompanyId == null)
-                return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
-            var result = await _service.CreateAsync(CompanyId.Value, request);
-            return CreatedAtAction(nameof(GetPaged),
-                new { clientId = result.ClientId }, result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        if (CompanyId == null)
+            return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
+        // A cross-company ClientId/TreatmentTypeId throws KeyNotFoundException, mapped to 404
+        // by GlobalExceptionHandler (see A4) — no local catch needed.
+        var result = await _service.CreateAsync(CompanyId.Value, request);
+        return CreatedAtAction(nameof(GetPaged),
+            new { clientId = result.ClientId }, result);
     }
 
     // GET /api/treatments/paged?page=1&pageSize=20
@@ -53,24 +48,19 @@ public class TreatmentsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTreatmentRequest request)
     {
-        try
-        {
-            var existing = await _service.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+        var existing = await _service.GetByIdAsync(id);
+        if (existing == null) return NotFound();
 
-            // Non-SuperAdmin can only update treatments belonging to their own company
-            if (!IsSuperAdmin && existing.CompanyId != CompanyId)
-                return Forbid();
+        // Non-SuperAdmin can only update treatments belonging to their own company
+        if (!IsSuperAdmin && existing.CompanyId != CompanyId)
+            return Forbid();
 
-            var updated = await _service.UpdateAsync(id, request);
-            if (updated == null)
-                return NotFound();
-            return Ok(updated);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        // A cross-company ClientId/TreatmentTypeId reassignment throws KeyNotFoundException,
+        // mapped to 404 by GlobalExceptionHandler (see A4) — no local catch needed.
+        var updated = await _service.UpdateAsync(id, request);
+        if (updated == null)
+            return NotFound();
+        return Ok(updated);
     }
 
     // GET /api/treatment/{id}
