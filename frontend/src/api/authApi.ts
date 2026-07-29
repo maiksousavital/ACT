@@ -6,5 +6,12 @@ export const authApi = {
     const response = await axiosInstance.post<AuthResponse>('/auth/login', data)
     return response.data
   },
+  logout: async (): Promise<void> => {
+    await axiosInstance.post('/auth/logout')
+  },
+  me: async (): Promise<AuthResponse> => {
+    const response = await axiosInstance.get<AuthResponse>('/auth/me')
+    return response.data
+  },
 }
 

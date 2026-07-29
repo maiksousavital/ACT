@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using ACT.API.Extensions;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -12,15 +13,21 @@ namespace ACT.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private const string CookieName = "act_token";
 
-    public AuthController(IAuthService authService)
+    private readonly IAuthService _authService;
+    private readonly IConfiguration _config;
+
+    public AuthController(IAuthService authService, IConfiguration config)
     {
         _authService = authService;
+        _config = config;
     }
 
     /// <summary>
-    /// Public — authenticate with email and password, returns JWT.
+    /// Public — authenticate with email and password. The JWT is set as an httpOnly cookie —
+    /// never exposed to JS, closing the XSS-token-theft vector localStorage had — instead of
+    /// being returned in the response body.
     /// </summary>
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -33,11 +40,13 @@ public class AuthController : ControllerBase
         if (result == null)
             return Unauthorized(new { message = "Invalid email or password." });
 
-        return Ok(result);
+        SetAuthCookie(result.Token);
+        return Ok(new { result.Email, result.Role, result.CompanyId });
     }
 
     /// <summary>
-    /// SuperAdmin only — create a new user for a company.
+    /// SuperAdmin only — create a new user for a company. Returns the new account's details, not
+    /// a live token — the caller (a SuperAdmin) isn't meant to end up signed in as the new user.
     /// </summary>
     [Authorize(Roles = "SuperAdmin")]
     [HttpPost("register")]
@@ -46,7 +55,24 @@ public class AuthController : ControllerBase
         // A duplicate email throws InvalidOperationException, mapped to 409 by
         // GlobalExceptionHandler (see A4) — no local catch needed.
         var result = await _authService.RegisterAsync(request);
-        return Created("", result);
+        return Created("", new { result.Email, result.Role, result.CompanyId });
+    }
+
+    /// <summary>
+    /// Returns the current caller's identity. Since the JWT is httpOnly and invisible to JS, the
+    /// SPA calls this (the cookie is sent automatically) to restore auth state on page load
+    /// instead of decoding the token client-side.
+    /// </summary>
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            Email = User.FindFirstValue("email"),
+            Role = User.FindFirstValue("role"),
+            CompanyId = User.GetCompanyId()
+        });
     }
 
     /// <summary>
@@ -59,7 +85,21 @@ public class AuthController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
         await _authService.LogoutAsync(userId);
+        Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
         return NoContent();
+    }
+
+    private void SetAuthCookie(string token)
+    {
+        var expiryMinutes = int.Parse(_config["JwtSettings:ExpiryMinutes"]!);
+        Response.Cookies.Append(CookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(expiryMinutes),
+            Path = "/"
+        });
     }
 }
 

@@ -24,6 +24,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// ── CSRF (double-submit cookie) — needed because the JWT now travels in an httpOnly cookie
+// (see AuthController.Login/Logout) instead of a bearer header, which reintroduces CSRF risk
+// bearer-token auth didn't have: browsers attach cookies to cross-site requests automatically.
+// The antiforgery system cookie stays httpOnly; a separate readable "XSRF-TOKEN" cookie carries
+// the request token so the SPA can echo it back as a header (wired up below and in Program.cs's
+// middleware pipeline).
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
 // ── Tenant context — resolves the caller's company scope from the JWT for EF Core's
 // global query filters (defense-in-depth tenant isolation, see AppDbContext) ───────
 builder.Services.AddHttpContextAccessor();
@@ -132,6 +143,18 @@ builder.Services.AddAuthentication(options =>
     // DB lookup per authenticated request in exchange for revocability; see User.TokenVersion.
     options.Events = new JwtBearerEvents
     {
+        // The SPA no longer has JS access to the token (see AuthController.Login) — it arrives
+        // via the httpOnly "act_token" cookie instead of an Authorization header. Bearer-header
+        // auth (e.g. Swagger's "Authorize" button, a future API client) keeps working unchanged:
+        // this only falls back to the cookie when no header was supplied.
+        OnMessageReceived = context =>
+        {
+            if (string.IsNullOrEmpty(context.Token) && context.Request.Cookies.TryGetValue("act_token", out var cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+            return Task.CompletedTask;
+        },
         OnTokenValidated = async context =>
         {
             var userIdClaim = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -162,7 +185,11 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            // Required for the browser to send/receive the httpOnly auth cookie cross-origin
+            // (frontend dev server and API run on different ports). Only valid combined with
+            // explicit WithOrigins above — the CORS spec forbids this alongside a wildcard origin.
+            .AllowCredentials();
     });
 });
 
@@ -226,6 +253,47 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowPwa");
+
+// ── CSRF (double-submit cookie) ────────────────────────────────────────────────
+// GET requests refresh the readable "XSRF-TOKEN" cookie the SPA echoes back as a header (see
+// AddAntiforgery above). Mutating requests are validated — but only when the caller is actually
+// using cookie auth (carries "act_token"): a browser attaches cookies to cross-site requests
+// automatically, which is the CSRF risk; an explicit Authorization header (Swagger, a future API
+// client) can't be forged cross-site the same way, so those requests are left alone.
+app.Use(async (context, next) =>
+{
+    var antiforgery = context.RequestServices.GetRequiredService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>();
+
+    if (HttpMethods.IsGet(context.Request.Method))
+    {
+        var tokens = antiforgery.GetAndStoreTokens(context);
+        context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!, new CookieOptions
+        {
+            HttpOnly = false,
+            SameSite = SameSiteMode.Strict,
+            Secure = context.Request.IsHttps,
+            Path = "/"
+        });
+    }
+    else if (!HttpMethods.IsHead(context.Request.Method)
+        && !HttpMethods.IsOptions(context.Request.Method)
+        && !HttpMethods.IsTrace(context.Request.Method)
+        && context.Request.Cookies.ContainsKey("act_token"))
+    {
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (Microsoft.AspNetCore.Antiforgery.AntiforgeryValidationException)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { message = "CSRF validation failed." });
+            return;
+        }
+    }
+
+    await next();
+});
 
 // Only use HTTPS redirection if HTTPS is enabled in the URLs
 var hasHttps = app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));

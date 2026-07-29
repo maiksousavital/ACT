@@ -1,24 +1,21 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react'
 import type { User } from '../types/auth'
-import { getToken, setToken, removeToken, isTokenExpired, decodeToken } from '../utils/token'
 import { authApi } from '../api/authApi'
 import type { LoginRequest } from '../types/auth'
 
 interface AuthState {
   user: User | null
-  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
 }
 
 type AuthAction =
-  | { type: 'LOGIN_SUCCESS'; payload: { user: User; token: string } }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: User } }
   | { type: 'LOGOUT' }
   | { type: 'LOADED' }
 
 const initialState: AuthState = {
   user: null,
-  token: null,
   isAuthenticated: false,
   isLoading: true,
 }
@@ -28,7 +25,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case 'LOGIN_SUCCESS':
       return {
         user: action.payload.user,
-        token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
       }
@@ -43,7 +39,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 interface AuthContextType extends AuthState {
   login: (data: LoginRequest) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   isSuperAdmin: boolean
   isAdmin: boolean
 }
@@ -53,37 +49,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
+  // The JWT lives in an httpOnly cookie invisible to JS (see E1), so there's nothing to decode
+  // client-side on load — instead, ask the backend who the cookie belongs to. A 401 here just
+  // means "not logged in", not an error.
   useEffect(() => {
-    const token = getToken()
-    if (token && !isTokenExpired(token)) {
-      const decoded = decodeToken(token)
-      const user: User = {
-        email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email || '',
-        role: decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || '',
-        companyId: decoded.CompanyId ? Number(decoded.CompanyId) : null,
-      }
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } })
-    } else {
-      if (token) removeToken()
-      dispatch({ type: 'LOADED' })
-    }
+    authApi
+      .me()
+      .then((response) => {
+        const user: User = { email: response.email, role: response.role, companyId: response.companyId }
+        dispatch({ type: 'LOGIN_SUCCESS', payload: { user } })
+      })
+      .catch(() => {
+        dispatch({ type: 'LOADED' })
+      })
   }, [])
 
   const login = async (data: LoginRequest) => {
     const response = await authApi.login(data)
-    setToken(response.token)
-    const decoded = decodeToken(response.token)
-    const user: User = {
-      email: response.email || decoded.email || '',
-      role: response.role || decoded.role || '',
-      companyId: response.companyId,
-    }
-    dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: response.token } })
+    const user: User = { email: response.email, role: response.role, companyId: response.companyId }
+    dispatch({ type: 'LOGIN_SUCCESS', payload: { user } })
   }
 
-  const logout = () => {
-    removeToken()
-    dispatch({ type: 'LOGOUT' })
+  const logout = async () => {
+    try {
+      await authApi.logout()
+    } finally {
+      // Clear local state even if the network call failed — the user shouldn't appear stuck
+      // "logged in" client-side just because the revoke request didn't reach the server.
+      dispatch({ type: 'LOGOUT' })
+    }
   }
 
   const isSuperAdmin = state.user?.role === 'SuperAdmin'
@@ -101,4 +95,3 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context
 }
-
