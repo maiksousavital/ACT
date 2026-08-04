@@ -1,0 +1,38 @@
+# Local SQL Server-compatible database for development — Azure SQL Edge, Microsoft's arm64-native
+# image that speaks the same TDS wire protocol as SQL Server. Same connection string shape, same
+# EF Core SqlServer provider, functionally identical for this app (no raw SQL/T-SQL anywhere).
+#
+# Why not real SQL Server: both the 2022 and 2019 Linux images hit a known QEMU emulation bug on
+# Apple Silicon under this machine's Docker Desktop version (mmap failure at startup, container
+# exits immediately) — Rosetta-based emulation avoids it but wasn't reliably toggleable on the
+# installed Docker Desktop version (4.21.1, from 2023). Azure SQL Edge sidesteps the whole problem
+# by running natively instead of under emulation. Revisit real SQL Server via Docker + Rosetta
+# after updating Docker Desktop, if exact-engine parity ever matters.
+#
+# Usage:
+#   docker compose up -d
+#   dotnet user-secrets set "ConnectionStrings:Default" \
+#     "Server=localhost,1433;Database=act;User Id=sa;Password=DevOnly_Passw0rd!;TrustServerCertificate=True;" \
+#     --project src/ACT.API
+#
+# The SA_PASSWORD below is a local-dev-only default — the container only binds to localhost, this
+# is not a real secret and must never be reused for anything internet-facing.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: act-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "DevOnly_Passw0rd!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - act-sqlserver-data:/var/opt/mssql
+    # No Docker healthcheck: Azure SQL Edge's image doesn't bundle sqlcmd (or any other SQL
+    # client) to probe with, and nothing in this compose file depends on service_healthy anyway.
+    # Check readiness from the host instead — e.g. `docker logs act-sqlserver` for the "SQL
+    # Server is now ready for client connections" line, or just try connecting.
+
+volumes:
+  act-sqlserver-data:

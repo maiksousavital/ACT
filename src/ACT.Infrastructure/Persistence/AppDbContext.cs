@@ -93,10 +93,15 @@ public class AppDbContext : DbContext
             // Global query filter — see Client above for rationale.
             e.HasQueryFilter(t => _tenantContext.IsSuperAdmin || t.CompanyId == _tenantContext.CompanyId);
 
+            // Restrict, not Cascade: Client already cascades Company -> Client -> Treatment, so a
+            // second direct Company -> Treatment cascade path is redundant — and SQL Server (unlike
+            // SQLite, which silently allowed this) refuses to create a FK introducing multiple
+            // cascade paths to the same table. The transitive path via Client still fully cleans up
+            // a company's treatments on cascade; this just removes the ambiguous second path.
             e.HasOne(t => t.Company)
              .WithMany(co => co.Treatments)
              .HasForeignKey(t => t.CompanyId)
-             .OnDelete(DeleteBehavior.Cascade);
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ── Company ───────────────────────────────────────────────────────────

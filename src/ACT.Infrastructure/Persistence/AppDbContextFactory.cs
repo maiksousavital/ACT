@@ -18,8 +18,11 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 
     public AppDbContext CreateDbContext(string[] args)
     {
+        // Design-time commands (`dotnet ef migrations add/has-pending-model-changes`) only compare
+        // the compiled model against the migration snapshot — no live connection is ever opened,
+        // so this connection string just needs to be syntactically valid for the SqlServer provider.
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite("Data Source=act.db")
+            .UseSqlServer("Server=localhost,1433;Database=act;User Id=sa;Password=DevOnly_Passw0rd!;TrustServerCertificate=True;")
             .Options;
 
         return new AppDbContext(options, new DesignTimeTenantContext());

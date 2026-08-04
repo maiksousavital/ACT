@@ -41,8 +41,18 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpContextTenantContext>();
 
 // ── Database ──────────────────────────────────────────────────────────────────
+// Set via `dotnet user-secrets set "ConnectionStrings:Default" "..."` locally, or the
+// ConnectionStrings__Default environment variable in every other environment — never in
+// appsettings*.json (same pattern as JwtSettings:Secret below).
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:Default is not configured. Set it via 'dotnet user-secrets set \"ConnectionStrings:Default\" \"<value>\"' " +
+        "(local dev) or the ConnectionStrings__Default environment variable (all other environments).");
+}
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+    options.UseSqlServer(connectionString));
 
 // ── Repositories ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
