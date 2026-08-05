@@ -8,6 +8,8 @@ import { OfflineBanner } from './components/Common/OfflineBanner'
 import { InstallPrompt } from './components/Common/InstallPrompt'
 import { AppShell } from './components/Layout/AppShell'
 import { LoginPage } from './pages/Login/LoginPage'
+import { ForgotPasswordPage } from './pages/Login/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/Login/ResetPasswordPage'
 import { NotFoundPage } from './pages/NotFound/NotFoundPage'
 import { DashboardPage } from './pages/Dashboard/DashboardPage'
 import { ClientListPage } from './pages/Clients/ClientListPage'
@@ -37,6 +39,8 @@ export default function App() {
         <Toaster position="top-right" />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route
             element={

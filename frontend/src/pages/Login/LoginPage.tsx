@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -93,6 +93,9 @@ export function LoginPage() {
               {loading ? <Spinner animation="border" size="sm" /> : 'Sign In'}
             </Button>
           </Form>
+          <div className="text-center mt-3">
+            <Link to="/forgot-password">Forgot your password?</Link>
+          </div>
         </Card.Body>
       </Card>
     </div>

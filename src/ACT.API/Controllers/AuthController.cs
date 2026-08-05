@@ -16,11 +16,13 @@ public class AuthController : ControllerBase
     private const string CookieName = "act_token";
 
     private readonly IAuthService _authService;
+    private readonly IPasswordResetService _passwordResetService;
     private readonly IConfiguration _config;
 
-    public AuthController(IAuthService authService, IConfiguration config)
+    public AuthController(IAuthService authService, IPasswordResetService passwordResetService, IConfiguration config)
     {
         _authService = authService;
+        _passwordResetService = passwordResetService;
         _config = config;
     }
 
@@ -87,6 +89,32 @@ public class AuthController : ControllerBase
         await _authService.LogoutAsync(userId);
         Response.Cookies.Delete(CookieName, new CookieOptions { Path = "/" });
         return NoContent();
+    }
+
+    /// <summary>
+    /// Public — always returns the same generic message whether or not the email is registered,
+    /// so this can't be used to enumerate valid accounts. Rate limited per IP.
+    /// </summary>
+    [AllowAnonymous]
+    [EnableRateLimiting("password-reset")]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await _passwordResetService.RequestResetAsync(request.Email);
+        return Ok(new { message = "If an account exists for that email, a password reset link has been sent." });
+    }
+
+    /// <summary>
+    /// Public — consumes a reset token minted by ForgotPassword. An invalid, expired, or
+    /// already-used token throws ArgumentException, mapped to 400 by GlobalExceptionHandler.
+    /// </summary>
+    [AllowAnonymous]
+    [EnableRateLimiting("password-reset")]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        await _passwordResetService.ResetPasswordAsync(request.Token, request.NewPassword);
+        return Ok(new { message = "Your password has been reset. Please log in with your new password." });
     }
 
     private void SetAuthCookie(string token)

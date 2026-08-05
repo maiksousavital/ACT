@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -161,6 +162,21 @@ public class AppDbContext : DbContext
             e.HasIndex(a => a.CompanyId);
             e.HasIndex(a => a.Timestamp);
             e.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+
+        // ── PasswordResetToken ───────────────────────────────────────────────
+        modelBuilder.Entity<PasswordResetToken>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.TokenHash).IsRequired().HasMaxLength(128);
+            // Unique — a hash collision here would let one valid token satisfy two lookups.
+            e.HasIndex(t => t.TokenHash).IsUnique();
+            e.HasIndex(t => t.UserId);
+
+            e.HasOne(t => t.User)
+             .WithMany()
+             .HasForeignKey(t => t.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── LoginHistory ──────────────────────────────────────────────────────

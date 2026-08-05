@@ -15,3 +15,12 @@ export interface User {
   companyId: number | null
 }
 
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface ResetPasswordRequest {
+  token: string
+  newPassword: string
+}
+
