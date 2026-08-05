@@ -25,9 +25,10 @@ public class ClientController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientDto>> Create([FromBody] CreateClientRequest request)
     {
-        if (CompanyId == null)
+        var targetCompanyId = IsSuperAdmin ? request.CompanyId : CompanyId;
+        if (targetCompanyId == null)
             return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
-        var created = await _clientService.CreateAsync(CompanyId.Value, request, User.GetUserId(), User.GetEmail());
+        var created = await _clientService.CreateAsync(targetCompanyId.Value, request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

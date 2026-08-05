@@ -11,6 +11,7 @@ export interface ClientDto {
 }
 
 export interface CreateClientRequest {
+  companyId?: number
   firstName: string
   lastName: string
   email?: string

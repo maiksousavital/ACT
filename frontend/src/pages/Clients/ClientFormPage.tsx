@@ -6,9 +6,13 @@ import { z } from 'zod'
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap'
 import toast from 'react-hot-toast'
 import { clientApi } from '../../api/clientApi'
+import { companyApi } from '../../api/companyApi'
 import { EntityAuditLogButton } from '../../components/Audit/EntityAuditLogButton'
+import { useAuth } from '../../contexts/AuthContext'
+import type { CompanyDto } from '../../types/company'
 
 const clientSchema = z.object({
+  companyId: z.string().optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
@@ -22,18 +26,27 @@ export function ClientFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = !!id
+  const { isSuperAdmin } = useAuth()
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(isEdit)
   const [error, setError] = useState<string | null>(null)
+  const [companies, setCompanies] = useState<CompanyDto[]>([])
 
   const {
     register,
     handleSubmit,
     reset,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
   })
+
+  useEffect(() => {
+    if (isSuperAdmin && !isEdit) {
+      companyApi.getPaged(1, 100).then((res) => setCompanies(res.items)).catch(() => {})
+    }
+  }, [isSuperAdmin, isEdit])
 
   useEffect(() => {
     if (isEdit) {
@@ -54,6 +67,10 @@ export function ClientFormPage() {
   }, [id, isEdit, reset])
 
   const onSubmit = async (data: ClientFormData) => {
+    if (isSuperAdmin && !isEdit && !data.companyId) {
+      setFieldError('companyId', { message: 'Select a company' })
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -61,7 +78,7 @@ export function ClientFormPage() {
         await clientApi.update(Number(id), data)
         toast.success('Client updated')
       } else {
-        await clientApi.create(data)
+        await clientApi.create({ ...data, companyId: data.companyId ? Number(data.companyId) : undefined })
         toast.success('Client created')
       }
       navigate('/clients')
@@ -92,6 +109,17 @@ export function ClientFormPage() {
           {error && <Alert variant="danger">{error}</Alert>}
 
           <Form onSubmit={handleSubmit(onSubmit)} className="mx-auto" style={{ maxWidth: '600px' }}>
+            {isSuperAdmin && !isEdit && (
+              <Form.Group className="mb-3">
+                <Form.Label>Company *</Form.Label>
+                <Form.Select isInvalid={!!errors.companyId} {...register('companyId')}>
+                  <option value="">Select company...</option>
+                  {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">{errors.companyId?.message}</Form.Control.Feedback>
+              </Form.Group>
+            )}
+
             <Form.Group className="mb-3">
               <Form.Label>First Name *</Form.Label>
               <Form.Control isInvalid={!!errors.firstName} {...register('firstName')} />
