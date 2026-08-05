@@ -36,13 +36,18 @@ export function TreatmentTypeFormPage() {
   useEffect(() => {
     async function fetchMetadata() {
       try {
-        const meta = await treatmentTypeApi.getMetadata()
-        setPeriods(meta.allowedFollowUpPeriods)
+        let allPeriods = (await treatmentTypeApi.getMetadata()).allowedFollowUpPeriods
 
         if (isEdit) {
           const tt = await treatmentTypeApi.getById(Number(id))
+          if (!allPeriods.some((p) => p.days === tt.followUpIntervalDays)) {
+            allPeriods = [...allPeriods, { name: `${tt.followUpIntervalDays} days`, days: tt.followUpIntervalDays }]
+              .sort((a, b) => a.days - b.days)
+          }
           reset({ name: tt.name, followUpIntervalDays: String(tt.followUpIntervalDays) })
         }
+
+        setPeriods(allPeriods)
       } catch {
         setError('Failed to load data')
       } finally {
