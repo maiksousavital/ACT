@@ -1,4 +1,6 @@
+using ACT.Application.Services.Interfaces;
 using ACT.Infrastructure.Persistence;
+using ACT.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,14 +30,31 @@ public class FollowUpNotificationWorker : BackgroundService
 
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var pushSender = scope.ServiceProvider.GetRequiredService<IPushNotificationSender>();
+            var subscriptionRepo = scope.ServiceProvider.GetRequiredService<IPushSubscriptionRepository>();
 
-            // Cross-company: get all due follow-ups regardless of company
-            var due = await db.Treatments
+            // Grouped per company — a company's users should only ever hear about their own due
+            // follow-ups. No .IgnoreQueryFilters() needed: there's no HttpContext in a background
+            // worker, so the tenant query filter already treats this as an unrestricted caller
+            // (see HttpContextTenantContext).
+            var dueByCompany = await db.Treatments
                 .Where(t => t.FollowedUpAt == null && t.NextFollowUpDate.Date <= DateTime.UtcNow.Date)
-                .CountAsync(ct);
+                .GroupBy(t => t.CompanyId)
+                .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
 
-            _logger.LogInformation("Follow-ups due today: {Count}", due);
-            // TODO: Push notification logic — group by CompanyId for per-company notifications
+            foreach (var group in dueByCompany)
+            {
+                var subscriptions = await subscriptionRepo.GetByCompanyIdAsync(group.CompanyId);
+                var body = group.Count == 1 ? "1 follow-up needs attention" : $"{group.Count} follow-ups need attention";
+
+                foreach (var subscription in subscriptions)
+                {
+                    await pushSender.SendAsync(subscription, "Follow-ups due", body, "/follow-ups");
+                }
+            }
+
+            _logger.LogInformation("Follow-up push run complete: {CompanyCount} companies with due follow-ups", dueByCompany.Count);
         }
     }
 }

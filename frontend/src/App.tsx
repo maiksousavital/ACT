@@ -21,6 +21,7 @@ import { TreatmentListPage } from './pages/Treatments/TreatmentListPage'
 import { TreatmentFormPage } from './pages/Treatments/TreatmentFormPage'
 import { FollowUpsPage } from './pages/FollowUps/FollowUpsPage'
 import { BrandSettingsPage } from './pages/Settings/BrandSettingsPage'
+import { NotificationSettingsPage } from './pages/Settings/NotificationSettingsPage'
 import { CompanyListPage } from './pages/Admin/Companies/CompanyListPage'
 import { CompanyFormPage } from './pages/Admin/Companies/CompanyFormPage'
 import { UserListPage } from './pages/Admin/Users/UserListPage'
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="/treatments/new" element={<TreatmentFormPage />} />
             <Route path="/treatments/:id/edit" element={<TreatmentFormPage />} />
             <Route path="/follow-ups" element={<FollowUpsPage />} />
+            <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
             <Route path="/settings/branding" element={<BrandSettingsPage />} />
             <Route path="/admin/companies" element={<RoleGuard requiredRole="SuperAdmin"><CompanyListPage /></RoleGuard>} />
             <Route path="/admin/companies/new" element={<RoleGuard requiredRole="SuperAdmin"><CompanyFormPage /></RoleGuard>} />

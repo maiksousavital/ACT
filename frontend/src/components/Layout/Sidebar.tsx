@@ -42,6 +42,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <li><NavLink to="/treatments" className={linkClass} onClick={onClose}>Treatments</NavLink></li>
         <li><NavLink to="/treatment-types" className={linkClass} onClick={onClose}>Treatment Types</NavLink></li>
         <li><NavLink to="/follow-ups" className={linkClass} onClick={onClose}>Follow-Ups</NavLink></li>
+        <li><NavLink to="/settings/notifications" className={linkClass} onClick={onClose}>Notifications</NavLink></li>
 
         {isAdmin && (
           <li className="mt-3">

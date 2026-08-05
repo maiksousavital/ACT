@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -176,6 +177,24 @@ public class AppDbContext : DbContext
             e.HasOne(t => t.User)
              .WithMany()
              .HasForeignKey(t => t.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── PushSubscription ─────────────────────────────────────────────────
+        modelBuilder.Entity<PushSubscription>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Endpoint).IsRequired().HasMaxLength(500);
+            e.Property(p => p.P256dh).IsRequired().HasMaxLength(200);
+            e.Property(p => p.Auth).IsRequired().HasMaxLength(200);
+            // A given browser subscription is unique — re-subscribing the same device upserts
+            // rather than accumulating duplicate rows.
+            e.HasIndex(p => p.Endpoint).IsUnique();
+            e.HasIndex(p => p.UserId);
+
+            e.HasOne(p => p.User)
+             .WithMany()
+             .HasForeignKey(p => p.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
