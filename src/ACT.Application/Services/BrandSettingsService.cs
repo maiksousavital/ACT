@@ -22,6 +22,24 @@ public class BrandSettingsService : IBrandSettingsService
 
     public async Task<BrandSettingsDto> CreateAsync(int companyId, CreateBrandSettingsRequest request)
     {
+        // Upsert: a company can only ever have one BrandSettings row (enforced by convention, not
+        // a DB constraint), so treat a second Create as an Update rather than risk a duplicate row
+        // that GetByCompanyIdAsync's FirstOrDefaultAsync would then silently ignore.
+        var existing = await _repo.GetByCompanyIdAsync(companyId);
+        if (existing != null)
+        {
+            existing.PrimaryColor = request.PrimaryColor;
+            existing.SecondaryColor = request.SecondaryColor;
+            existing.AccentColor = request.AccentColor;
+            existing.SidebarColor = request.SidebarColor;
+            existing.BackgroundColor = request.BackgroundColor;
+            existing.Theme = request.Theme;
+            existing.LogoUrl = request.LogoUrl;
+            await _repo.UpdateAsync(existing);
+            await _repo.SaveChangesAsync();
+            return ToDto(existing);
+        }
+
         var entity = new BrandSettings
         {
             CompanyId = companyId,

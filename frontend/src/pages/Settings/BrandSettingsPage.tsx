@@ -13,6 +13,8 @@ interface FormState {
   primaryColor: string
   secondaryColor: string
   accentColor: string
+  sidebarColor: string
+  backgroundColor: string
   theme: string
   logoUrl: string
 }
@@ -22,16 +24,22 @@ const THEME_PALETTES: Record<string, Omit<FormState, 'logoUrl' | 'theme'>> = {
     primaryColor: '#6366F1',
     secondaryColor: '#06B6D4',
     accentColor: '#8B5CF6',
+    sidebarColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
   },
   dark: {
     primaryColor: '#818CF8',
     secondaryColor: '#22D3EE',
     accentColor: '#A78BFA',
+    sidebarColor: '#0F172A',
+    backgroundColor: '#111827',
   },
   custom: {
     primaryColor: '#10B981',
     secondaryColor: '#F59E0B',
     accentColor: '#EF4444',
+    sidebarColor: '#1E293B',
+    backgroundColor: '#FFFBEB',
   },
 }
 
@@ -39,6 +47,8 @@ const DEFAULTS: FormState = {
   primaryColor: '#6366F1',
   secondaryColor: '#06B6D4',
   accentColor: '#8B5CF6',
+  sidebarColor: '#1E293B',
+  backgroundColor: '#F8FAFC',
   theme: 'light',
   logoUrl: '',
 }
@@ -162,10 +172,20 @@ export function BrandSettingsPage() {
       } else {
         await brandApi.create(payload, companyParam)
       }
-      // Reload saved settings to confirm persistence
+      // Reload saved settings to confirm persistence, and re-apply exactly what was persisted —
+      // this is what the preview keeps showing, independent of the logged-in user's own session.
       const saved = await brandApi.get(companyParam)
-      if (saved) setExisting(saved)
-      await refresh()
+      if (saved) {
+        setExisting(saved)
+        applyBrandToRoot(saved)
+      }
+      // Only sync the app-wide session brand when saving the current user's OWN company.
+      // useBrand().refresh() applies based on the logged-in user's companyId — for a SuperAdmin
+      // (who has no company) that call resets everything back to defaults, wiping out the preview
+      // of whatever company they were actually editing.
+      if (!isSuperAdmin) {
+        await refresh()
+      }
       toast.success('Brand settings saved')
     } catch {
       setError('Failed to save settings. Please try again.')

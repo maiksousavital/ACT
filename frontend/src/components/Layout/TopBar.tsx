@@ -9,7 +9,10 @@ export function TopBar({ onToggleSidebar }: TopBarProps) {
   const { user, logout } = useAuth()
 
   return (
-    <header className="d-flex align-items-center justify-content-between px-3 px-md-4 py-2 border-bottom bg-white">
+    <header
+      className="d-flex align-items-center justify-content-between px-3 px-md-4 py-2 border-bottom"
+      style={{ backgroundColor: 'var(--act-page-bg, #fff)', color: 'var(--act-page-text, inherit)' }}
+    >
       <Button
         variant="outline-dark"
         size="sm"
