@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap'
 import toast from 'react-hot-toast'
 import { treatmentTypeApi } from '../../api/treatmentTypeApi'
+import { EntityAuditLogButton } from '../../components/Audit/EntityAuditLogButton'
 import type { FollowUpPeriodOption } from '../../types/treatmentType'
 
 const treatmentTypeSchema = z.object({
@@ -87,7 +88,10 @@ export function TreatmentTypeFormPage() {
 
   return (
     <div>
-      <h4 className="fw-bold mb-3">{isEdit ? 'Edit Treatment Type' : 'New Treatment Type'}</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{isEdit ? 'Edit Treatment Type' : 'New Treatment Type'}</h4>
+        {isEdit && <EntityAuditLogButton entityType="TreatmentType" entityId={Number(id)} />}
+      </div>
 
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-md-4">

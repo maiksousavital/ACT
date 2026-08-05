@@ -31,7 +31,7 @@ public class TreatmentsController : ControllerBase
             return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
         // A cross-company ClientId/TreatmentTypeId throws KeyNotFoundException, mapped to 404
         // by GlobalExceptionHandler (see A4) — no local catch needed.
-        var result = await _service.CreateAsync(CompanyId.Value, request);
+        var result = await _service.CreateAsync(CompanyId.Value, request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetPaged),
             new { clientId = result.ClientId }, result);
     }
@@ -57,7 +57,7 @@ public class TreatmentsController : ControllerBase
 
         // A cross-company ClientId/TreatmentTypeId reassignment throws KeyNotFoundException,
         // mapped to 404 by GlobalExceptionHandler (see A4) — no local catch needed.
-        var updated = await _service.UpdateAsync(id, request);
+        var updated = await _service.UpdateAsync(id, request, User.GetUserId(), User.GetEmail());
         if (updated == null)
             return NotFound();
         return Ok(updated);

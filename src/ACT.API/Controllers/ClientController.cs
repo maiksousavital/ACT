@@ -27,7 +27,7 @@ public class ClientController : ControllerBase
     {
         if (CompanyId == null)
             return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
-        var created = await _clientService.CreateAsync(CompanyId.Value, request);
+        var created = await _clientService.CreateAsync(CompanyId.Value, request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -41,7 +41,7 @@ public class ClientController : ControllerBase
         if (!IsSuperAdmin && existing.CompanyId != CompanyId)
             return Forbid();
 
-        var updated = await _clientService.UpdateAsync(id, request);
+        var updated = await _clientService.UpdateAsync(id, request, User.GetUserId(), User.GetEmail());
         if (updated == null) return NotFound();
         return Ok(updated);
     }
@@ -77,7 +77,7 @@ public class ClientController : ControllerBase
         if (!IsSuperAdmin && existing.CompanyId != CompanyId)
             return Forbid();
 
-        var result = await _clientService.DeleteAsync(id);
+        var result = await _clientService.DeleteAsync(id, User.GetUserId(), User.GetEmail());
         if (!result) return NotFound();
         return NoContent();
     }

@@ -8,6 +8,10 @@ public interface IAuditLogRepository
     Task<IEnumerable<AuditLog>> GetByCompanyAsync(int companyId, int limit = 100);
     Task<IEnumerable<AuditLog>> GetAllAsync(int limit = 100);
     Task<(IEnumerable<AuditLog> Items, int TotalCount)> GetPagedAsync(int? companyId, int page, int pageSize);
+
+    Task<(IEnumerable<AuditLog> Items, int TotalCount)> GetForEntityPagedAsync(int? companyId, string entityType,
+        int entityId, string? search, DateTime? from, DateTime? to, int page, int pageSize);
+
     Task SaveChangesAsync();
 }
 

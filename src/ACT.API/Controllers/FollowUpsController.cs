@@ -47,7 +47,7 @@ public class FollowUpsController : ControllerBase
     {
         // Unknown id -> KeyNotFoundException (404); already-followed-up -> InvalidOperationException
         // (409) — both mapped by GlobalExceptionHandler (see A4), no local catch needed.
-        var result = await _service.CompleteFollowUpAsync(id, request);
+        var result = await _service.CompleteFollowUpAsync(id, request, User.GetUserId(), User.GetEmail());
         return Ok(result);
     }
 }

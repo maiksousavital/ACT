@@ -9,10 +9,12 @@ namespace ACT.Application.Services;
 public class TreatmentTypeService : ITreatmentTypeService
 {
     private readonly ITreatmentTypeRepository _treatmentTypeRepository;
+    private readonly IAuditService _auditService;
 
-    public TreatmentTypeService(ITreatmentTypeRepository treatmentTypeRepository)
+    public TreatmentTypeService(ITreatmentTypeRepository treatmentTypeRepository, IAuditService auditService)
     {
         _treatmentTypeRepository = treatmentTypeRepository;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int? companyId)
@@ -37,7 +39,7 @@ public class TreatmentTypeService : ITreatmentTypeService
         };
     }
 
-    public async Task<TreatmentTypeDto> CreateAsync(int companyId, CreateTreatmentTypeRequest request)
+    public async Task<TreatmentTypeDto> CreateAsync(int companyId, CreateTreatmentTypeRequest request, int? userId, string userEmail)
     {
         var entity = new TreatmentType
         {
@@ -48,18 +50,27 @@ public class TreatmentTypeService : ITreatmentTypeService
         };
         await _treatmentTypeRepository.AddAsync(entity);
         await _treatmentTypeRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, companyId, "Create", "TreatmentType", entity.Id);
         return ToDto(entity);
     }
 
-    public async Task<TreatmentTypeDto?> UpdateAsync(int id, UpdateTreatmentTypeRequest request)
+    public async Task<TreatmentTypeDto?> UpdateAsync(int id, UpdateTreatmentTypeRequest request, int? userId, string userEmail)
     {
         var entity = await _treatmentTypeRepository.GetByIdAsync(id);
         if (entity == null) return null;
+
+        var changes = AuditDiff.Compare(
+            ("Name", entity.Name, request.Name),
+            ("FollowUpIntervalDays", entity.FollowUpIntervalDays, request.FollowUpIntervalDays),
+            ("IsActive", entity.IsActive, request.IsActive)
+        );
+
         entity.Name = request.Name;
         entity.FollowUpIntervalDays = request.FollowUpIntervalDays;
         entity.IsActive = request.IsActive;
         await _treatmentTypeRepository.UpdateAsync(entity);
         await _treatmentTypeRepository.SaveChangesAsync();
+        await _auditService.LogChangesAsync(userId, userEmail, entity.CompanyId, "TreatmentType", id, changes);
         return ToDto(entity);
     }
 

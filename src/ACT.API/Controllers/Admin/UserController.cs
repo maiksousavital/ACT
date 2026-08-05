@@ -88,7 +88,7 @@ public class UserController : ControllerBase
 
         // A duplicate email throws InvalidOperationException, mapped to 409 by
         // GlobalExceptionHandler (see A4) — no local catch needed.
-        var user = await _userService.CreateAsync(request);
+        var user = await _userService.CreateAsync(request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
     }
 
@@ -110,7 +110,7 @@ public class UserController : ControllerBase
         if (!IsSuperAdmin && request.Role == Domain.Enums.Role.SuperAdmin)
             return Forbid();
 
-        var updated = await _userService.UpdateAsync(id, request);
+        var updated = await _userService.UpdateAsync(id, request, User.GetUserId(), User.GetEmail());
         return Ok(updated);
     }
 
@@ -128,7 +128,7 @@ public class UserController : ControllerBase
         if (!IsSuperAdmin && existingUser.CompanyId != CompanyId)
             return Forbid();
 
-        await _userService.DeactivateAsync(id);
+        await _userService.DeactivateAsync(id, User.GetUserId(), User.GetEmail());
         return NoContent();
     }
 }

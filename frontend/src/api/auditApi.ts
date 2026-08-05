@@ -16,5 +16,23 @@ export const auditApi = {
     })
     return response.data
   },
+
+  getForEntity: async (
+    entityType: string,
+    entityId: number,
+    params: { page?: number; pageSize?: number; search?: string; from?: string; to?: string } = {},
+  ): Promise<PagedResult<AuditLogDto>> => {
+    const { page = 1, pageSize = 20, search, from, to } = params
+    const response = await axiosInstance.get<PagedResult<AuditLogDto>>(`/audit/entity/${entityType}/${entityId}`, {
+      params: {
+        page,
+        pageSize,
+        ...(search ? { search } : {}),
+        ...(from ? { from } : {}),
+        ...(to ? { to } : {}),
+      },
+    })
+    return response.data
+  },
 }
 

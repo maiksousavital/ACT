@@ -33,10 +33,48 @@ public class AuditService : IAuditService
         await _auditRepo.SaveChangesAsync();
     }
 
+    public async Task LogChangesAsync(int? userId, string userEmail, int? companyId, string entityType, int entityId,
+        List<(string Field, string? Old, string? New)> changes)
+    {
+        if (changes.Count == 0)
+            return;
+
+        foreach (var (field, oldValue, newValue) in changes)
+        {
+            await _auditRepo.AddAsync(new AuditLog
+            {
+                UserId = userId,
+                UserEmail = userEmail,
+                CompanyId = companyId,
+                Action = "Update",
+                EntityType = entityType,
+                EntityId = entityId,
+                FieldName = field,
+                OldValue = oldValue,
+                NewValue = newValue
+            });
+        }
+        await _auditRepo.SaveChangesAsync();
+    }
+
     public async Task<PagedResult<AuditLogDto>> GetPagedAsync(int? companyId, int page, int pageSize)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
         var (items, totalCount) = await _auditRepo.GetPagedAsync(companyId, page, pageSize);
+        return new PagedResult<AuditLogDto>
+        {
+            Items = items.Select(ToAuditDto),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<PagedResult<AuditLogDto>> GetForEntityPagedAsync(int? companyId, string entityType, int entityId,
+        string? search, DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var (items, totalCount) = await _auditRepo.GetForEntityPagedAsync(companyId, entityType, entityId, search, from, to, page, pageSize);
         return new PagedResult<AuditLogDto>
         {
             Items = items.Select(ToAuditDto),
@@ -69,6 +107,9 @@ public class AuditService : IAuditService
         EntityType = a.EntityType,
         EntityId = a.EntityId,
         Details = a.Details,
+        FieldName = a.FieldName,
+        OldValue = a.OldValue,
+        NewValue = a.NewValue,
         Timestamp = a.Timestamp
     };
 

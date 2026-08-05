@@ -1,3 +1,4 @@
+using ACT.API.Extensions;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -35,14 +36,14 @@ public class CompanyController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CompanyDto>> Create([FromBody] CreateCompanyRequest request)
     {
-        var created = await _companyService.CreateAsync(request);
+        var created = await _companyService.CreateAsync(request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<CompanyDto>> Update(int id, [FromBody] UpdateCompanyRequest request)
     {
-        var updated = await _companyService.UpdateAsync(id, request);
+        var updated = await _companyService.UpdateAsync(id, request, User.GetUserId(), User.GetEmail());
         if (updated == null) return NotFound();
         return Ok(updated);
     }
@@ -50,7 +51,7 @@ public class CompanyController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var result = await _companyService.DeleteAsync(id);
+        var result = await _companyService.DeleteAsync(id, User.GetUserId(), User.GetEmail());
         if (!result) return NotFound();
         return NoContent();
     }

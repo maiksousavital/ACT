@@ -4,6 +4,7 @@ using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
 using ACT.Infrastructure.Persistence;
 using ACT.Infrastructure.Repositories;
+using ACT.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ACT.Tests;
@@ -47,7 +48,7 @@ public class PagingTests
             context.Clients.Add(new Client { Id = i, FirstName = $"C{i}", LastName = "Test", CompanyId = 1 });
         await context.SaveChangesAsync();
 
-        var service = new ClientService(new ClientRepository(context));
+        var service = new ClientService(new ClientRepository(context), new NoopAuditService());
         var result = await service.GetPagedAsync(companyId: 1, page: 1, pageSize: 999_999_999);
 
         // Metadata must match what was actually queried, not the caller's raw request.

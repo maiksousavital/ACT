@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap'
 import toast from 'react-hot-toast'
 import { clientApi } from '../../api/clientApi'
+import { EntityAuditLogButton } from '../../components/Audit/EntityAuditLogButton'
 
 const clientSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -81,7 +82,10 @@ export function ClientFormPage() {
 
   return (
     <div>
-      <h4 className="fw-bold mb-3">{isEdit ? 'Edit Client' : 'New Client'}</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{isEdit ? 'Edit Client' : 'New Client'}</h4>
+        {isEdit && <EntityAuditLogButton entityType="Client" entityId={Number(id)} />}
+      </div>
 
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-md-4">

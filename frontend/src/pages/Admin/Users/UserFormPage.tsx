@@ -9,6 +9,7 @@ import { userApi } from '../../../api/userApi'
 import { companyApi } from '../../../api/companyApi'
 import { useAuth } from '../../../contexts/AuthContext'
 import type { CompanyDto } from '../../../types/company'
+import { EntityAuditLogButton } from '../../../components/Audit/EntityAuditLogButton'
 
 const createSchema = z.object({
   email: z.string().email('Valid email is required'),
@@ -120,7 +121,10 @@ export function UserFormPage() {
 
   return (
     <div>
-      <h4 className="fw-bold mb-3">{isEdit ? `Edit User — ${userEmail}` : 'New User'}</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{isEdit ? `Edit User — ${userEmail}` : 'New User'}</h4>
+        {isEdit && <EntityAuditLogButton entityType="User" entityId={Number(id)} />}
+      </div>
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-md-4">
           {error && <Alert variant="danger">{error}</Alert>}

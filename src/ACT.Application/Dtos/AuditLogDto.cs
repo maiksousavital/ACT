@@ -10,6 +10,9 @@ public class AuditLogDto
     public string EntityType { get; set; } = string.Empty;
     public int? EntityId { get; set; }
     public string? Details { get; set; }
+    public string? FieldName { get; set; }
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
     public DateTime Timestamp { get; set; }
 }
 

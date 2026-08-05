@@ -6,6 +6,7 @@ using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
 using ACT.Infrastructure.Persistence;
 using ACT.Infrastructure.Repositories;
+using ACT.Tests.TestHelpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -134,12 +135,13 @@ public class TenantIsolationTests
         var treatmentRepo = new TreatmentRepository(context);
         var typeRepo = new TreatmentTypeRepository(context);
 
+        var auditService = new NoopAuditService();
         return new Scope
         {
             Context = context,
-            ClientService = new ClientService(clientRepo),
-            TreatmentService = new TreatmentService(treatmentRepo, clientRepo, typeRepo),
-            TreatmentTypeService = new TreatmentTypeService(typeRepo),
+            ClientService = new ClientService(clientRepo, auditService),
+            TreatmentService = new TreatmentService(treatmentRepo, clientRepo, typeRepo, auditService),
+            TreatmentTypeService = new TreatmentTypeService(typeRepo, auditService),
             ClientRepository = clientRepo,
             TreatmentRepository = treatmentRepo,
             TreatmentTypeRepository = typeRepo
@@ -385,7 +387,7 @@ public class TenantIsolationTests
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => scope.TreatmentService.CreateAsync(CompanyA, request));
+            () => scope.TreatmentService.CreateAsync(CompanyA, request, null, "test@test.com"));
     }
 
     [Fact]
@@ -401,7 +403,7 @@ public class TenantIsolationTests
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => scope.TreatmentService.CreateAsync(CompanyA, request));
+            () => scope.TreatmentService.CreateAsync(CompanyA, request, null, "test@test.com"));
     }
 
     [Fact]
@@ -417,7 +419,7 @@ public class TenantIsolationTests
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request));
+            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request, null, "test@test.com"));
     }
 
     [Fact]
@@ -433,7 +435,7 @@ public class TenantIsolationTests
         };
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request));
+            () => scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request, null, "test@test.com"));
     }
 
     [Fact]
@@ -449,7 +451,7 @@ public class TenantIsolationTests
             Notes = "updated"
         };
 
-        var result = await scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request);
+        var result = await scope.TreatmentService.UpdateAsync(world.TreatmentA.Id, request, null, "test@test.com");
 
         Assert.NotNull(result);
         Assert.Equal("updated", result!.Notes);

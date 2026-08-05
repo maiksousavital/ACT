@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap'
 import toast from 'react-hot-toast'
 import { companyApi } from '../../../api/companyApi'
+import { EntityAuditLogButton } from '../../../components/Audit/EntityAuditLogButton'
 
 const companySchema = z.object({
   name: z.string().min(1, 'Company name is required'),
@@ -60,7 +61,10 @@ export function CompanyFormPage() {
 
   return (
     <div>
-      <h4 className="fw-bold mb-3">{isEdit ? 'Edit Company' : 'New Company'}</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{isEdit ? 'Edit Company' : 'New Company'}</h4>
+        {isEdit && <EntityAuditLogButton entityType="Company" entityId={Number(id)} />}
+      </div>
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-md-4">
           {error && <Alert variant="danger">{error}</Alert>}

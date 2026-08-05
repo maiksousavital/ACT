@@ -8,6 +8,6 @@ public interface ITreatmentTypeService
     Task<IEnumerable<TreatmentType>> GetAllActiveAsync(int? companyId);
     Task<TreatmentTypeDto?> GetByIdAsync(int id);
     Task<PagedResult<TreatmentTypeDto>> GetPagedAsync(int? companyId, int page, int pageSize);
-    Task<TreatmentTypeDto> CreateAsync(int companyId, CreateTreatmentTypeRequest request);
-    Task<TreatmentTypeDto?> UpdateAsync(int id, UpdateTreatmentTypeRequest request);
+    Task<TreatmentTypeDto> CreateAsync(int companyId, CreateTreatmentTypeRequest request, int? userId, string userEmail);
+    Task<TreatmentTypeDto?> UpdateAsync(int id, UpdateTreatmentTypeRequest request, int? userId, string userEmail);
 }

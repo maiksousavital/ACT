@@ -10,6 +10,7 @@ import { clientApi } from '../../api/clientApi'
 import { treatmentTypeApi } from '../../api/treatmentTypeApi'
 import type { ClientDto } from '../../types/client'
 import type { TreatmentTypeDto } from '../../types/treatmentType'
+import { EntityAuditLogButton } from '../../components/Audit/EntityAuditLogButton'
 
 const treatmentSchema = z.object({
   clientId: z.string().min(1, 'Select a client'),
@@ -111,7 +112,10 @@ export function TreatmentFormPage() {
 
   return (
     <div>
-      <h4 className="fw-bold mb-3">{isEdit ? 'Edit Treatment' : 'New Treatment'}</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{isEdit ? 'Edit Treatment' : 'New Treatment'}</h4>
+        {isEdit && <EntityAuditLogButton entityType="Treatment" entityId={Number(id)} />}
+      </div>
 
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-md-4">

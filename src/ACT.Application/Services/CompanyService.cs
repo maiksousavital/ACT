@@ -9,10 +9,12 @@ namespace ACT.Application.Services;
 public class CompanyService : ICompanyService
 {
     private readonly ICompanyRepository _companyRepository;
+    private readonly IAuditService _auditService;
 
-    public CompanyService(ICompanyRepository companyRepository)
+    public CompanyService(ICompanyRepository companyRepository, IAuditService auditService)
     {
         _companyRepository = companyRepository;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<CompanyDto>> GetAllAsync()
@@ -27,7 +29,7 @@ public class CompanyService : ICompanyService
         return company == null ? null : ToDto(company);
     }
 
-    public async Task<CompanyDto> CreateAsync(CreateCompanyRequest request)
+    public async Task<CompanyDto> CreateAsync(CreateCompanyRequest request, int? userId, string userEmail)
     {
         var entity = new Company
         {
@@ -39,13 +41,21 @@ public class CompanyService : ICompanyService
 
         await _companyRepository.AddAsync(entity);
         await _companyRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, entity.Id, "Create", "Company", entity.Id);
         return ToDto(entity);
     }
 
-    public async Task<CompanyDto?> UpdateAsync(int id, UpdateCompanyRequest request)
+    public async Task<CompanyDto?> UpdateAsync(int id, UpdateCompanyRequest request, int? userId, string userEmail)
     {
         var entity = await _companyRepository.GetByIdAsync(id);
         if (entity == null) return null;
+
+        var changes = AuditDiff.Compare(
+            ("Name", entity.Name, request.Name),
+            ("ContactEmail", entity.ContactEmail, request.ContactEmail),
+            ("Phone", entity.Phone, request.Phone),
+            ("Address", entity.Address, request.Address)
+        );
 
         entity.Name = request.Name;
         entity.ContactEmail = request.ContactEmail;
@@ -54,6 +64,7 @@ public class CompanyService : ICompanyService
 
         await _companyRepository.UpdateAsync(entity);
         await _companyRepository.SaveChangesAsync();
+        await _auditService.LogChangesAsync(userId, userEmail, id, "Company", id, changes);
         return ToDto(entity);
     }
 
@@ -70,7 +81,7 @@ public class CompanyService : ICompanyService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int? userId, string userEmail)
     {
         var entity = await _companyRepository.GetByIdAsync(id);
         if (entity == null) return false;
@@ -78,6 +89,7 @@ public class CompanyService : ICompanyService
         entity.IsDeleted = true;
         await _companyRepository.UpdateAsync(entity);
         await _companyRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, id, "Delete", "Company", id);
         return true;
     }
 

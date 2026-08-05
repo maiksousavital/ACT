@@ -7,6 +7,9 @@ export interface AuditLogDto {
   entityType: string
   entityId?: number
   details?: string
+  fieldName?: string
+  oldValue?: string
+  newValue?: string
   timestamp: string
 }
 

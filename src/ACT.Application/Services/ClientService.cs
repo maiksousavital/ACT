@@ -9,10 +9,12 @@ namespace ACT.Application.Services;
 public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
+    private readonly IAuditService _auditService;
 
-    public ClientService(IClientRepository clientRepository)
+    public ClientService(IClientRepository clientRepository, IAuditService auditService)
     {
         _clientRepository = clientRepository;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<ClientDto>> GetAllAsync(int? companyId, bool includeDeleted = false)
@@ -27,7 +29,7 @@ public class ClientService : IClientService
         return client == null ? null : ToDto(client);
     }
 
-    public async Task<ClientDto> CreateAsync(int companyId, CreateClientRequest request)
+    public async Task<ClientDto> CreateAsync(int companyId, CreateClientRequest request, int? userId, string userEmail)
     {
         var client = new Client
         {
@@ -40,14 +42,23 @@ public class ClientService : IClientService
         };
         await _clientRepository.AddAsync(client);
         await _clientRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, companyId, "Create", "Client", client.Id);
         return ToDto(client);
     }
 
-    public async Task<ClientDto?> UpdateAsync(int id, UpdateClientRequest request)
+    public async Task<ClientDto?> UpdateAsync(int id, UpdateClientRequest request, int? userId, string userEmail)
     {
         var existingClient = await _clientRepository.GetByIdAsync(id);
         if (existingClient == null)
             return null;
+
+        var changes = AuditDiff.Compare(
+            ("FirstName", existingClient.FirstName, request.FirstName),
+            ("LastName", existingClient.LastName, request.LastName),
+            ("Email", existingClient.Email, request.Email),
+            ("Phone", existingClient.Phone, request.Phone),
+            ("Notes", existingClient.Notes, request.Notes)
+        );
 
         existingClient.FirstName = request.FirstName;
         existingClient.LastName = request.LastName;
@@ -57,6 +68,7 @@ public class ClientService : IClientService
 
         await _clientRepository.UpdateAsync(existingClient);
         await _clientRepository.SaveChangesAsync();
+        await _auditService.LogChangesAsync(userId, userEmail, existingClient.CompanyId, "Client", id, changes);
         return ToDto(existingClient);
     }
 
@@ -73,7 +85,7 @@ public class ClientService : IClientService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int? userId, string userEmail)
     {
         var client = await _clientRepository.GetByIdAsync(id);
         if (client == null) return false;
@@ -81,6 +93,7 @@ public class ClientService : IClientService
         client.IsDeleted = true;
         await _clientRepository.UpdateAsync(client);
         await _clientRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, client.CompanyId, "Delete", "Client", client.Id);
         return true;
     }
 

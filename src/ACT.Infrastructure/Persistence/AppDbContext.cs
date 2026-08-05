@@ -155,8 +155,12 @@ public class AppDbContext : DbContext
             e.Property(a => a.UserEmail).HasMaxLength(200);
             e.Property(a => a.Action).IsRequired().HasMaxLength(50);
             e.Property(a => a.EntityType).IsRequired().HasMaxLength(100);
+            e.Property(a => a.FieldName).HasMaxLength(100);
+            e.Property(a => a.OldValue).HasMaxLength(1000);
+            e.Property(a => a.NewValue).HasMaxLength(1000);
             e.HasIndex(a => a.CompanyId);
             e.HasIndex(a => a.Timestamp);
+            e.HasIndex(a => new { a.EntityType, a.EntityId });
         });
 
         // ── LoginHistory ──────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+using ACT.Application.Common;
 using ACT.Application.Dtos;
 using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
@@ -9,11 +10,13 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IAuditService _auditService;
 
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IAuditService auditService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllAsync()
@@ -34,7 +37,7 @@ public class UserService : IUserService
         return user == null ? null : ToDto(user);
     }
 
-    public async Task<UserDto> CreateAsync(RegisterRequest request)
+    public async Task<UserDto> CreateAsync(RegisterRequest request, int? userId, string userEmail)
     {
         var existing = await _userRepository.GetByEmailAsync(request.Email);
         if (existing != null)
@@ -51,13 +54,26 @@ public class UserService : IUserService
 
         await _userRepository.AddAsync(user);
         await _userRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, user.CompanyId, "Create", "User", user.Id);
         return ToDto(user);
     }
 
-    public async Task<UserDto?> UpdateAsync(int id, UpdateUserRequest request)
+    public async Task<UserDto?> UpdateAsync(int id, UpdateUserRequest request, int? userId, string userEmail)
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return null;
+
+        var newEmail = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : user.Email;
+        var newCompanyId = request.CompanyId.HasValue ? request.CompanyId.Value : (int?)user.CompanyId;
+        var newRole = request.Role ?? user.Role;
+        var newIsActive = request.IsActive ?? user.IsActive;
+
+        var changes = AuditDiff.Compare(
+            ("Email", user.Email, newEmail),
+            ("CompanyId", user.CompanyId, newCompanyId),
+            ("Role", user.Role, newRole),
+            ("IsActive", user.IsActive, newIsActive)
+        );
 
         if (!string.IsNullOrWhiteSpace(request.Email))
             user.Email = request.Email;
@@ -79,10 +95,11 @@ public class UserService : IUserService
 
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
+        await _auditService.LogChangesAsync(userId, userEmail, user.CompanyId, "User", id, changes);
         return ToDto(user);
     }
 
-    public async Task<bool> DeactivateAsync(int id)
+    public async Task<bool> DeactivateAsync(int id, int? userId, string userEmail)
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return false;
@@ -91,6 +108,7 @@ public class UserService : IUserService
         user.TokenVersion++;
         await _userRepository.UpdateAsync(user);
         await _userRepository.SaveChangesAsync();
+        await _auditService.LogAsync(userId, userEmail, user.CompanyId, "Deactivate", "User", user.Id);
         return true;
     }
 

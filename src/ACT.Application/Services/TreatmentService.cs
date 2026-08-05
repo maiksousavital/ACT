@@ -11,15 +11,18 @@ public class TreatmentService : ITreatmentService
     private readonly ITreatmentRepository     _treatments;
     private readonly IClientRepository        _clients;
     private readonly ITreatmentTypeRepository _types;
+    private readonly IAuditService            _auditService;
 
     public TreatmentService(
         ITreatmentRepository     treatments,
         IClientRepository        clients,
-        ITreatmentTypeRepository types)
+        ITreatmentTypeRepository types,
+        IAuditService            auditService)
     {
-        _treatments = treatments;
-        _clients    = clients;
-        _types      = types;
+        _treatments   = treatments;
+        _clients      = clients;
+        _types        = types;
+        _auditService = auditService;
     }
 
     // ── Queries ───────────────────────────────────────────────────────────────
@@ -63,7 +66,7 @@ public class TreatmentService : ITreatmentService
 
     // ── Mutations ─────────────────────────────────────────────────────────────
 
-    public async Task<TreatmentDto> CreateAsync(int companyId, CreateTreatmentRequest request)
+    public async Task<TreatmentDto> CreateAsync(int companyId, CreateTreatmentRequest request, int? userId, string userEmail)
     {
         var client = await _clients.GetByIdAsync(request.ClientId)
             ?? throw new KeyNotFoundException($"Client {request.ClientId} not found");
@@ -90,11 +93,12 @@ public class TreatmentService : ITreatmentService
         var saved = await _treatments.GetByIdAsync(treatment.Id)
             ?? throw new Exception("Failed to reload saved treatment");
 
+        await _auditService.LogAsync(userId, userEmail, companyId, "Create", "Treatment", treatment.Id);
         return ToDto(saved);
     }
 
     public async Task<TreatmentDto> CompleteFollowUpAsync(
-        int id, CompleteFollowUpRequest request)
+        int id, CompleteFollowUpRequest request, int? userId, string userEmail)
     {
         var treatment = await _treatments.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"Treatment {id} not found");
@@ -102,6 +106,11 @@ public class TreatmentService : ITreatmentService
         if (treatment.IsFollowedUp)
             throw new InvalidOperationException(
                 "This follow-up has already been completed.");
+
+        var changes = AuditDiff.Compare(
+            ("FollowedUpAt", treatment.FollowedUpAt, DateTime.UtcNow),
+            ("FollowUpNotes", treatment.FollowUpNotes, request.FollowUpNotes)
+        );
 
         // mark the current treatment as followed up
         treatment.FollowedUpAt   = DateTime.UtcNow;
@@ -119,10 +128,12 @@ public class TreatmentService : ITreatmentService
         await _treatments.AddAsync(next);
         await _treatments.SaveChangesAsync();
 
+        await _auditService.LogChangesAsync(userId, userEmail, treatment.CompanyId, "Treatment", id, changes);
+        await _auditService.LogAsync(userId, userEmail, treatment.CompanyId, "Create", "Treatment", next.Id);
         return ToDto(treatment);
     }
 
-    public async Task<TreatmentDto?> UpdateAsync(int id, UpdateTreatmentRequest request)
+    public async Task<TreatmentDto?> UpdateAsync(int id, UpdateTreatmentRequest request, int? userId, string userEmail)
     {
         var treatment = await _treatments.GetByIdAsync(id);
         if (treatment == null)
@@ -147,6 +158,13 @@ public class TreatmentService : ITreatmentService
                 throw new KeyNotFoundException($"TreatmentType {request.TreatmentTypeId} not found");
         }
 
+        var changes = AuditDiff.Compare(
+            ("ClientId", treatment.ClientId, request.ClientId),
+            ("TreatmentTypeId", treatment.TreatmentTypeId, request.TreatmentTypeId),
+            ("TreatmentDate", treatment.TreatmentDate, request.TreatmentDate),
+            ("Notes", treatment.Notes, request.Notes)
+        );
+
         // Update properties
         treatment.ClientId = request.ClientId;
         treatment.TreatmentTypeId = request.TreatmentTypeId;
@@ -161,6 +179,7 @@ public class TreatmentService : ITreatmentService
         // Reload with navigation properties
         var saved = await _treatments.GetByIdAsync(treatment.Id)
             ?? throw new Exception("Failed to reload treatment");
+        await _auditService.LogChangesAsync(userId, userEmail, treatment.CompanyId, "Treatment", id, changes);
         return ToDto(saved);
     }
 

@@ -3,6 +3,7 @@ using ACT.Application.Services.Interfaces;
 using ACT.Domain.Entities;
 using ACT.Infrastructure.Persistence;
 using ACT.Infrastructure.Repositories;
+using ACT.Tests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ACT.Tests;
@@ -44,8 +45,8 @@ public class CompanyCascadeSafetyTests
 
         using (var context = BuildContext(dbName))
         {
-            var service = new CompanyService(new CompanyRepository(context));
-            var deleted = await service.DeleteAsync(1);
+            var service = new CompanyService(new CompanyRepository(context), new NoopAuditService());
+            var deleted = await service.DeleteAsync(1, null, "test@test.com");
             Assert.True(deleted);
         }
 

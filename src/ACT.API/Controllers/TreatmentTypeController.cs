@@ -57,7 +57,7 @@ public class TreatmentTypeController : ControllerBase
     {
         if (CompanyId == null)
             return BadRequest(new { message = "companyId is required. SuperAdmin must specify a company." });
-        var created = await _treatmentTypeService.CreateAsync(CompanyId.Value, request);
+        var created = await _treatmentTypeService.CreateAsync(CompanyId.Value, request, User.GetUserId(), User.GetEmail());
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -71,7 +71,7 @@ public class TreatmentTypeController : ControllerBase
         if (!IsSuperAdmin && existing.CompanyId != CompanyId)
             return Forbid();
 
-        var updated = await _treatmentTypeService.UpdateAsync(id, request);
+        var updated = await _treatmentTypeService.UpdateAsync(id, request, User.GetUserId(), User.GetEmail());
         if (updated == null) return NotFound();
         return Ok(updated);
     }
